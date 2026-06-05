@@ -1,0 +1,392 @@
+/* ==========================================================================
+   1. CONFIGURACIÓN GENERAL, VARIABLES MONTESSORI Y TIPOGRAFÍA
+   ========================================================================== */
+:root {
+  /* Paleta Base Montessori */
+  --color-fondo: #F4F1EA;       /* Tono arena suave y cálido para descansar la vista */
+  --color-texto: #5D5A51;       /* Marrón grisáceo suave en vez de negro puro */
+  --color-tarjeta: #ffffff;
+  
+  /* Identidad y Acentos */
+  --color-primario: #8BA87E;    /* Verde musgo natural para botones de acción principal */
+  --color-primario-hover: #769369;
+  --color-secundario: #D98C71;  /* Terracota suave para líneas de tarjetas y énfasis */
+  
+  /* Inputs y Bordes */
+  --color-borde: #D5CFC1;       /* Gris tierra claro para los bordes */
+  --color-input-bg: #FAF9F5;    /* Fondo crema sutil para las cajas de texto */
+  --color-bg-alternativo: #EAE6DC; /* Fondo para secciones internas como alérgenos */
+  
+  /* Alertas de Seguridad */
+  --color-alerta-fondo: #FFF8E1; /* Ocre muy suave y apagado */
+  --color-alerta-borde: #FFE082;
+  --color-alerta-texto: #7F6000;
+  
+  /* Tags y Finanzas */
+  --color-precio: #C86A5A;      /* Rojo terracota para gastos */
+  --color-ahorro: #6E8E61;      /* Verde oliva para el ahorro */
+  --color-badge-bg: #F0EAD8;    /* Beige suave para insignias */
+  --color-badge-texto: #8C7B55;
+  --color-badge-precio-bg: #E3EDE4;
+  --color-badge-precio-texto: #4F6B43;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  padding: 20px 0;
+}
+
+/* Contenedor central general */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Estilo del Encabezado Principal */
+.main-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.main-logo {
+  max-width: 220px; /* Tamaño ideal para que luzca tierno y profesional */
+  height: auto;
+  display: inline-block;
+}
+
+.main-header p {
+  font-size: 1rem;
+  color: var(--color-texto);
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   2. DISTRIBUCIÓN DEL DASHBOARD (DOS COLUMNAS LADO A LADO)
+   ========================================================================== */
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr; 
+  gap: 30px;
+  align-items: start;
+}
+
+/* Diseño independiente para cada bloque blanco (Cards) */
+.card {
+  background: var(--color-tarjeta);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(93, 90, 81, 0.05);
+}
+
+.card h2 {
+  font-size: 1.4rem;
+  color: var(--color-texto);
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--color-fondo);
+  padding-bottom: 10px;
+}
+
+/* ==========================================================================
+   3. ESTILOS DE FORMULARIO (INPUTS, SELECTS Y CHECKBOXES)
+   ========================================================================== */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-texto);
+  margin-bottom: 8px;
+}
+
+input[type="number"], select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: var(--color-input-bg);
+  color: var(--color-texto);
+  transition: all 0.3s ease;
+}
+
+input[type="number"]:focus, select:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  background-color: var(--color-tarjeta);
+  box-shadow: 0 0 0 3px rgba(139, 168, 126, 0.2);
+}
+
+/* Grupo de casillas de verificación (Alergias) */
+.checkbox-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: var(--color-input-bg);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--color-fondo);
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 0;
+  color: var(--color-texto);
+}
+
+/* ==========================================================================
+   4. COMPONENTES DE BOTONES UNIFORMES (MISMO PORTE Y ESTILO)
+   ========================================================================== */
+button, .btn-secundario {
+  display: block;
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* Botón Principal (Generar) */
+.btn-submit {
+  background-color: var(--color-primario);
+  color: #ffffff;
+}
+
+.btn-submit:hover {
+  background-color: var(--color-primario-hover);
+  transform: translateY(-1px);
+}
+
+/* Botón Secundario (Limpiar) */
+.btn-secundario {
+  background-color: var(--color-bg-alternativo);
+  color: var(--color-texto);
+}
+
+.btn-secundario:hover {
+  background-color: var(--color-borde);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   5. SECCIÓN DE RESULTADOS Y CONTENEDOR MAESTRO DE DOS COLUMNAS
+   ========================================================================== */
+.finanzas-box {
+  background-color: var(--color-input-bg);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: space-around;
+  font-weight: bold;
+  border: 1px solid var(--color-borde);
+}
+
+.precio-tag { color: var(--color-precio); }
+.ahorro-tag { color: var(--color-ahorro); }
+
+.placeholder-text {
+  color: var(--color-texto);
+  opacity: 0.6;
+  font-style: italic;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* 🚀 ESTRUCTURA MAESTRA DE DOS COLUMNAS (Informe Izquierda / Menús Derecha) */
+#recipes-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 25px;
+  align-items: start;
+}
+
+/* En pantallas de escritorio se activa el diseño lado a lado */
+@media (min-width: 992px) {
+  #recipes-container {
+    grid-template-columns: 320px 1fr; /* Columna fija para datos, flexible para recetas */
+  }
+}
+
+/* --- PANEL INFORME NUTRICIONAL PEDIÁTRICO --- */
+.alert-box-container {
+  background-color: var(--color-input-bg) !important;
+  border-left: 5px solid var(--color-primario);
+  color: var(--color-texto) !important;
+  padding: 20px;
+  margin-top: 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.alert-box-container h3 {
+  margin-top: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  color: var(--color-texto);
+  border-bottom: 1px solid var(--color-borde);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.alert-box-container p {
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.alert-box-container ul {
+  margin: 15px 0 0 0 !important;
+  padding-left: 0 !important;
+  list-style: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.alert-box-container ul li {
+  color: var(--color-texto) !important;
+  font-size: 0.88rem;
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #eeebe5;
+}
+
+/* ==========================================================================
+   6. CONTROL DE VISTAS POR PESTAÑA (RESTALURANDO DISEÑO DE COLUMNA ANTERIOR)
+   ========================================================================== */
+
+/* Contenedor dinámico de contenidos de la pestaña */
+.tab-content-view {
+  display: flex !important;
+  flex-direction: column !important; /* Fuerza a las tarjetas a apilarse verticalmente */
+  gap: 20px !important;
+}
+
+/* Oculta de forma absoluta las pestañas inactivas */
+.tab-content-view.hidden {
+  display: none !important;
+}
+
+/* --- TARJETAS ORIGINALES (Restaura el diseño de tu imagen d0fc0d) --- */
+.receta-card {
+  background: var(--color-tarjeta);
+  border: 1px solid var(--color-borde);
+  border-top: 4px solid var(--color-secundario);
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(93, 90, 81, 0.02);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.receta-image-container {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background-color: var(--color-input-bg);
+}
+
+.receta-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.alerta-card-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(217, 140, 113, 0.95);
+  color: white;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+  z-index: 10;
+}
+
+.receta-body {
+  padding: 15px;
+}
+
+.receta-card h3 {
+  margin: 10px 0 5px 0;
+  color: var(--color-texto);
+}
+
+.receta-card h4 {
+  font-size: 0.9rem;
+  margin-top: 12px;
+  color: var(--color-texto);
+  opacity: 0.85;
+}
+
+.badge {
+  display: inline-block;
+  background: var(--color-badge-bg);
+  color: var(--color-badge-texto);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.badge.price {
+  background: var(--color-badge-precio-bg);
+  color: var(--color-badge-precio-texto);
+}
+
+.receta-card ul, .receta-card ol {
+  padding-left: 20px;
+  margin: 6px 0;
+  font-size: 0.85rem;
+  color: var(--color-texto);
+}
+
+/* PARCHE RÁPIDO PARA MÓVIL (Para usar mientras avanzamos en la lógica) */
+@media (max-width: 991px) {
+  /* Obliga al dashboard principal a dividirse en filas, no columnas */
+  .dashboard {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Deshace la división del contenedor de recetas e informes */
+  #recipes-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hace que los botones de las pestañas vuelvan a ponerse de lado */
+  .tabs-container {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+  }
+}

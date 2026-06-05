@@ -1,0 +1,24 @@
+{
+    "short_name": "NutriBebe", 
+    "name": "NutriBebé - Men+us Inteligentes Infantiles",
+    "description": "Generador inteligente de menús infantiles con presupuesto acotado y control pediátrico",
+    "start-url": "/index.html",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#F4F1EA",
+    "theme_color": "#8BA87E",
+    "icons": [
+        {
+            "src": "logo.png",
+            "type": "image/png",
+            "sizes": "192x192",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "logo.png",
+            "type": "image/png",
+            "sizes": "512x512", 
+            "purpose": "any maskable"
+        }
+    ]   
+}
