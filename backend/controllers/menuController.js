@@ -118,12 +118,14 @@ exports.generarMenuPersonalizado = async (req, res) => {
       // 3. Nuevo filtro: Formato de Alimentación (BLW / Papilla / Mixto)
       // Si el usuario elige "Mixto, le pueden aparecer recetas de todo tipo."
       // Si elige "BLW" o "Papilla", debe coincidir exactamente con el formato de la receta.
-      if (formatoAlimentacion !== 'Mixto' && receta.formato !== formatoAlimentacion) {
-        return false;
+      const formatoReceta = receta.formato || 'Mixto';
+
+      if (formatoAlimentacion && formatoAlimentacion !== 'Mixto') {
+        if (formatoReceta !== 'Mixto' && formatoReceta !== formatoAlimentacion){
+          return false;
+        }
       }
-      
-      return true;
-    });
+
 
     const principales = recetasAptas.filter(r => r.categoria === 'principal');
     const desayunos = recetasAptas.filter(r => r.categoria === 'desayuno');
