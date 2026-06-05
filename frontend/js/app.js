@@ -45,39 +45,73 @@ if (inputEdad && txtConversionEdad) {
 /* ==========================================================================
    1C. LÓGICA DE PERSISTENCIA (GUARDAR Y CARGAR LOCALSTORAGE)
    ========================================================================== */
-// Función para guardar todo el formulario de golpe
+// Función limpia y segura para guardar los datos
 function guardarDatosFormulario() {
+  // Capturamos los elementos del HTML de forma segura
+  const inputEdad = document.getElementById('edad') || document.getElementById('edadMeses');
+  const selectSexo = document.getElementById('sexo') || document.getElementById('sexoBiologico');
+  const selectFormato = document.getElementById('formato') || document.getElementById('formatoAlimentacion');
+  const inputPeso = document.getElementById('peso') || document.getElementById('pesoKg');
+  const inputTalla = document.getElementById('talla') || document.getElementById('tallaCm');
+  const inputPresupuesto = document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
+
+  // Validamos que existan antes de sacarles el .value para que no tire el error "null" de la captura
+  if (!inputEdad || !selectSexo || !selectFormato) {
+    console.warn("Advertencia: Algunos campos del formulario no se encontraron en el HTML.");
+    return;
+  }
+
   const datos = {
-    edadMeses: document.getElementById('edadMeses').value, // Asegúrate de que los IDs coincidan con tu HTML
-    sexoBiologico: document.getElementById('sexoBiologico').value,
-    formatoAlimentacion: document.getElementById('formatoAlimentacion').value,
-    pesoKg: document.getElementById('pesoKg').value,
-    tallaCm: document.getElementById('tallaCm').value,
-    presupuestoMaximoCLP: document.getElementById('presupuestoMaximoCLP').value
+    edadMeses: inputEdad.value,
+    sexoBiologico: selectSexo.value,
+    formatoAlimentacion: selectFormato.value,
+    pesoKg: inputPeso ? inputPeso.value : '',
+    tallaCm: inputTalla ? inputTalla.value : '',
+    presupuestoMaximoCLP: inputPresupuesto ? inputPresupuesto.value : ''
   };
+
   localStorage.setItem('nutribebe_datos', JSON.stringify(datos));
+  console.log("Datos respaldados en localStorage 💾");
 }
 
-// Escuchar los cambios en cada input para guardarlos automáticamente
-document.querySelectorAll('input, select').forEach(elemento => {
-  elemento.addEventListener('change', guardarDatosFormulario);
-});
-
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. Cargar datos guardados previamente al iniciar la página
   const datosGuardados = localStorage.getItem('nutribebe_datos');
-  
   if (datosGuardados) {
     const datos = JSON.parse(datosGuardados);
     
-    // Rellenamos los inputs de tu HTML (verifica que existan estos IDs)
-    if(datos.edadMeses) document.getElementById('edadMeses').value = datos.edadMeses;
-    if(datos.sexoBiologico) document.getElementById('sexoBiologico').value = datos.sexoBiologico;
-    if(datos.formatoAlimentacion) document.getElementById('formatoAlimentacion').value = datos.formatoAlimentacion;
-    if(datos.pesoKg) document.getElementById('pesoKg').value = datos.pesoKg;
-    if(datos.tallaCm) document.getElementById('tallaCm').value = datos.tallaCm;
-    if(datos.presupuestoMaximoCLP) document.getElementById('presupuestoMaximoCLP').value = datos.presupuestoMaximoCLP;
-    
-    console.log("¡Datos recuperados desde el localStorage con éxito! 💾");
+    const inputEdad = document.getElementById('edad') || document.getElementById('edadMeses');
+    const selectSexo = document.getElementById('sexo') || document.getElementById('sexoBiologico');
+    const selectFormato = document.getElementById('formato') || document.getElementById('formatoAlimentacion');
+    const inputPeso = document.getElementById('peso') || document.getElementById('pesoKg');
+    const inputTalla = document.getElementById('talla') || document.getElementById('tallaCm');
+    const inputPresupuesto = document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
+
+    if(inputEdad && datos.edadMeses) inputEdad.value = datos.edadMeses;
+    if(selectSexo && datos.sexoBiologico) selectSexo.value = datos.sexoBiologico;
+    if(selectFormato && datos.formatoAlimentacion) selectFormato.value = datos.formatoAlimentacion;
+    if(inputPeso && datos.pesoKg) inputPeso.value = datos.pesoKg;
+    if(inputTalla && datos.tallaCm) inputTalla.value = datos.tallaCm;
+    if(inputPresupuesto && datos.presupuestoMaximoCLP) inputPresupuesto.value = datos.presupuestoMaximoCLP;
+  }
+
+  // 2. Escuchar cambios automáticos en los inputs para ir guardando
+  document.querySelectorAll('input, select').forEach(elemento => {
+    elemento.addEventListener('change', guardarDatosFormulario);
+  });
+
+  // 3. Manejar el envío del formulario de manera unificada
+  const formulario = document.getElementById('formMenu') || document.querySelector('form');
+  if (formulario) {
+    formulario.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Guardamos antes de enviar
+      guardarDatosFormulario(); 
+      
+      // Aquí continuas con tu fetch() hacia la API de Render...
+      console.log("Enviando datos al backend modular...");
+    });
   }
 });
 /* ==========================================================================
