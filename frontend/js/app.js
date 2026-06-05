@@ -45,68 +45,41 @@ if (inputEdad && txtConversionEdad) {
 /* ==========================================================================
    1C. LÓGICA DE PERSISTENCIA (GUARDAR Y CARGAR LOCALSTORAGE)
    ========================================================================== */
-function guardarDatosEnStorage() {
-  if (!formulario) return;
-
-  const edad = document.getElementById('age').value;
-  const gender = document.getElementById('gender').value;
-  const weight = document.getElementById('weight').value;
-  const height = document.getElementById('height').value;
-  const budget = document.getElementById('budget').value;
-
-  // Alérgenos seleccionados
-  const checkboxesAlergias = document.querySelectorAll('input[name="allergens"]:checked');
-  const alergias = Array.from(checkboxesAlergias).map(cb => cb.value);
-
-  // Despensa seleccionada
-  const checkboxesDespensa = document.querySelectorAll('input[name="despensa"]:checked');
-  const despensa = Array.from(checkboxesDespensa).map(cb => cb.value);
-
-  const paqueteLocal = { edad, gender, weight, height, budget, alergias, despensa };
-  localStorage.setItem('menuBebeData', JSON.stringify(paqueteLocal));
+// Función para guardar todo el formulario de golpe
+function guardarDatosFormulario() {
+  const datos = {
+    edadMeses: document.getElementById('edadMeses').value, // Asegúrate de que los IDs coincidan con tu HTML
+    sexoBiologico: document.getElementById('sexoBiologico').value,
+    formatoAlimentacion: document.getElementById('formatoAlimentacion').value,
+    pesoKg: document.getElementById('pesoKg').value,
+    tallaCm: document.getElementById('tallaCm').value,
+    presupuestoMaximoCLP: document.getElementById('presupuestoMaximoCLP').value
+  };
+  localStorage.setItem('nutribebe_datos', JSON.stringify(datos));
 }
 
-function cargarDatosDesdeStorage() {
-  const datosGuardados = localStorage.getItem('menuBebeData');
-  if (!datosGuardados || !formulario) return;
+// Escuchar los cambios en cada input para guardarlos automáticamente
+document.querySelectorAll('input, select').forEach(elemento => {
+  elemento.addEventListener('change', guardarDatosFormulario);
+});
 
-  try {
+document.addEventListener('DOMContentLoaded', () => {
+  const datosGuardados = localStorage.getItem('nutribebe_datos');
+  
+  if (datosGuardados) {
     const datos = JSON.parse(datosGuardados);
-
-    // Rellenar campos de texto y selects
-    if (datos.edad) {
-      document.getElementById('age').value = datos.edad;
-      calcularConversionEdad(parseInt(datos.edad));
-    }
-    if (datos.gender) document.getElementById('gender').value = datos.gender;
-    if (datos.weight) document.getElementById('weight').value = datos.weight;
-    if (datos.height) document.getElementById('height').value = datos.height;
-    if (datos.budget) document.getElementById('budget').value = datos.budget;
-
-    // Marcar Checkboxes de Alérgenos
-    if (datos.alergias && Array.isArray(datos.alergias)) {
-      datos.alergias.forEach(val => {
-        const cb = formulario.querySelector(`input[name="allergens"][value="${val}"]`);
-        if (cb) cb.checked = true;
-      });
-    }
-
-    // Marcar Checkboxes de Despensa
-    if (datos.despensa && Array.isArray(datos.despensa)) {
-      datos.despensa.forEach(val => {
-        const cb = formulario.querySelector(`input[name="despensa"][value="${val}"]`);
-        if (cb) cb.checked = true;
-      });
-    }
-
-    // Ejecutar el envío automático para que los menús aparezcan al cargar la página
-    formulario.dispatchEvent(new Event('submit'));
-
-  } catch (error) {
-    console.error("Error al cargar desde localStorage", error);
+    
+    // Rellenamos los inputs de tu HTML (verifica que existan estos IDs)
+    if(datos.edadMeses) document.getElementById('edadMeses').value = datos.edadMeses;
+    if(datos.sexoBiologico) document.getElementById('sexoBiologico').value = datos.sexoBiologico;
+    if(datos.formatoAlimentacion) document.getElementById('formatoAlimentacion').value = datos.formatoAlimentacion;
+    if(datos.pesoKg) document.getElementById('pesoKg').value = datos.pesoKg;
+    if(datos.tallaCm) document.getElementById('tallaCm').value = datos.tallaCm;
+    if(datos.presupuestoMaximoCLP) document.getElementById('presupuestoMaximoCLP').value = datos.presupuestoMaximoCLP;
+    
+    console.log("¡Datos recuperados desde el localStorage con éxito! 💾");
   }
-}
-
+});
 /* ==========================================================================
    2. ESCUCHAR EL ENVÍO DEL FORMULARIO (Actualizado con Datos Biométricos)
    ========================================================================== */
