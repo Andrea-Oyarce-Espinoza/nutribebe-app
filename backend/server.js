@@ -5,21 +5,17 @@ if (process.env.NODE_ENV !== 'production') {
 
 const express = require('express');
 const cors = require('cors');
-const conectarDB = async () => {
-  // Manejador dinámico interno
-  const db = require('./config/db');
-  await db();
-};
+const conectarDB = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Conectar Base de Datos
-conectarDB();
-
 // Middlewares Globales
 app.use(express.json());
 app.use(cors());
+
+// Conectar Base de Datos
+conectarDB();
 
 // Registro Central de Rutas API
 app.use('/api', require('./routes/menuRoutes'));

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-cosnt conectarDB = async () => {
+const conectarDB = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('¡CONEXIÓN EXITOSA Y SEGURA A MONGO DB ATLAS! 🚀');
