@@ -10,14 +10,19 @@ const btnLimpiar = document.getElementById('btn-clear');
 const mensajePlaceholder = document.getElementById('placeholder-message');
 const txtConversionEdad = document.getElementById('age-conversion');
 const inputEdad = document.getElementById('age');
-const formatoAlimentacion = document.getElementById('format').value;
+
+// Modificado para evitar capturar el .value antes de que cargue el DOM
+const getFormatoAlimentacion = () => {
+  const elemento = document.getElementById('format') || document.getElementById('formato') || document.getElementById('formatoAlimentacion');
+  return elemento ? elemento.value : 'Mixto';
+};
 
 /* ==========================================================================
    1B. CONVERTIDOR DE EDAD EN TIEMPO REAL 
    ========================================================================== */
 function calcularConversionEdad(mesesTotales) {
   if (isNaN(mesesTotales) || mesesTotales < 6) {
-    txtConversionEdad.textContent = '';
+    if (txtConversionEdad) txtConversionEdad.textContent = '';
     return;
   }
   const anos = Math.floor(mesesTotales / 12);
@@ -45,95 +50,74 @@ if (inputEdad && txtConversionEdad) {
 /* ==========================================================================
    1C. LÓGICA DE PERSISTENCIA (GUARDAR Y CARGAR LOCALSTORAGE)
    ========================================================================== */
-// Función limpia y segura para guardar los datos
 function guardarDatosFormulario() {
-  // Capturamos los elementos del HTML de forma segura
-  const inputEdad = document.getElementById('edad') || document.getElementById('edadMeses');
-  const selectSexo = document.getElementById('sexo') || document.getElementById('sexoBiologico');
-  const selectFormato = document.getElementById('formato') || document.getElementById('formatoAlimentacion');
-  const inputPeso = document.getElementById('peso') || document.getElementById('pesoKg');
-  const inputTalla = document.getElementById('talla') || document.getElementById('tallaCm');
-  const inputPresupuesto = document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
+  // Captura flexible adaptada a múltiples variantes de IDs comunes
+  const inputE = document.getElementById('age') || document.getElementById('edad') || document.getElementById('edadMeses');
+  const selectS = document.getElementById('gender') || document.getElementById('sexo') || document.getElementById('sexoBiologico');
+  const selectF = document.getElementById('format') || document.getElementById('formato') || document.getElementById('formatoAlimentacion');
+  const inputP = document.getElementById('weight') || document.getElementById('peso') || document.getElementById('pesoKg');
+  const inputT = document.getElementById('height') || document.getElementById('talla') || document.getElementById('tallaCm');
+  const inputB = document.getElementById('budget') || document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
 
-  // Validamos que existan antes de sacarles el .value para que no tire el error "null" de la captura
-  if (!inputEdad || !selectSexo || !selectFormato) {
-    console.warn("Advertencia: Algunos campos del formulario no se encontraron en el HTML.");
+  if (!inputE || !selectS || !selectF) {
+    console.warn("Advertencia: No se encontraron los campos principales del formulario para guardar.");
     return;
   }
 
   const datos = {
-    edadMeses: inputEdad.value,
-    sexoBiologico: selectSexo.value,
-    formatoAlimentacion: selectFormato.value,
-    pesoKg: inputPeso ? inputPeso.value : '',
-    tallaCm: inputTalla ? inputTalla.value : '',
-    presupuestoMaximoCLP: inputPresupuesto ? inputPresupuesto.value : ''
+    edadMeses: inputE.value,
+    sexoBiologico: selectS.value,
+    formatoAlimentacion: selectF.value,
+    pesoKg: inputP ? inputP.value : '',
+    tallaCm: inputT ? inputT.value : '',
+    presupuestoMaximoCLP: inputB ? inputB.value : ''
   };
 
   localStorage.setItem('nutribebe_datos', JSON.stringify(datos));
   console.log("Datos respaldados en localStorage 💾");
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // 1. Cargar datos guardados previamente al iniciar la página
+function cargarDatosDesdeStorage() {
   const datosGuardados = localStorage.getItem('nutribebe_datos');
   if (datosGuardados) {
     const datos = JSON.parse(datosGuardados);
     
-    const inputEdad = document.getElementById('edad') || document.getElementById('edadMeses');
-    const selectSexo = document.getElementById('sexo') || document.getElementById('sexoBiologico');
-    const selectFormato = document.getElementById('formato') || document.getElementById('formatoAlimentacion');
-    const inputPeso = document.getElementById('peso') || document.getElementById('pesoKg');
-    const inputTalla = document.getElementById('talla') || document.getElementById('tallaCm');
-    const inputPresupuesto = document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
+    const inputE = document.getElementById('age') || document.getElementById('edad') || document.getElementById('edadMeses');
+    const selectS = document.getElementById('gender') || document.getElementById('sexo') || document.getElementById('sexoBiologico');
+    const selectF = document.getElementById('format') || document.getElementById('formato') || document.getElementById('formatoAlimentacion');
+    const inputP = document.getElementById('weight') || document.getElementById('peso') || document.getElementById('pesoKg');
+    const inputT = document.getElementById('height') || document.getElementById('talla') || document.getElementById('tallaCm');
+    const inputB = document.getElementById('budget') || document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
 
-    if(inputEdad && datos.edadMeses) inputEdad.value = datos.edadMeses;
-    if(selectSexo && datos.sexoBiologico) selectSexo.value = datos.sexoBiologico;
-    if(selectFormato && datos.formatoAlimentacion) selectFormato.value = datos.formatoAlimentacion;
-    if(inputPeso && datos.pesoKg) inputPeso.value = datos.pesoKg;
-    if(inputTalla && datos.tallaCm) inputTalla.value = datos.tallaCm;
-    if(inputPresupuesto && datos.presupuestoMaximoCLP) inputPresupuesto.value = datos.presupuestoMaximoCLP;
+    if(inputE && datos.edadMeses) { inputE.value = datos.edadMeses; calcularConversionEdad(parseInt(datos.edadMeses)); }
+    if(selectS && datos.sexoBiologico) selectS.value = datos.sexoBiologico;
+    if(selectF && datos.formatoAlimentacion) selectF.value = datos.formatoAlimentacion;
+    if(inputP && datos.pesoKg) inputP.value = datos.pesoKg;
+    if(inputT && datos.tallaCm) inputT.value = datos.tallaCm;
+    if(inputB && datos.presupuestoMaximoCLP) inputB.value = datos.presupuestoMaximoCLP;
+    
+    console.log("Datos recuperados del localStorage exitosamente.");
   }
+}
 
-  // 2. Escuchar cambios automáticos en los inputs para ir guardando
-  document.querySelectorAll('input, select').forEach(elemento => {
-    elemento.addEventListener('change', guardarDatosFormulario);
-  });
-
-  // 3. Manejar el envío del formulario de manera unificada
-  const formulario = document.getElementById('formMenu') || document.querySelector('form');
-  if (formulario) {
-    formulario.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      // Guardamos antes de enviar
-      guardarDatosFormulario(); 
-      
-      // Aquí continuas con tu fetch() hacia la API de Render...
-      console.log("Enviando datos al backend modular...");
-    });
-  }
-});
 /* ==========================================================================
-   2. ESCUCHAR EL ENVÍO DEL FORMULARIO (Actualizado con Datos Biométricos)
+   2. ESCUCHAR EL ENVÍO DEL FORMULARIO
    ========================================================================== */
 if (formulario) {
   formulario.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Evita que la página se recargue
+    e.preventDefault(); 
 
-    // 1. Recolectamos los valores ingresados por el usuario
+    // Re-capturamos los IDs del bloque superior sincronizados
     const edadMeses = parseInt(document.getElementById('age').value);
     const sexoBiologico = document.getElementById('gender').value;
     const pesoKg = parseFloat(document.getElementById('weight').value);
     const tallaCm = parseFloat(document.getElementById('height').value);
     const presupuestoMaximoCLP = parseInt(document.getElementById('budget').value);
 
-    // Recolectamos las alergias y mercadería seleccionadas
     const checkboxes = document.querySelectorAll('input[name="allergens"]:checked');
     const alergias = Array.from(checkboxes).map(cb => cb.value);
     const mercaderiaEnCasa = Array.from(formulario.querySelectorAll('input[name="despensa"]:checked')).map(el => el.value);
 
-    // 2. Preparamos el paquete de datos intermedio
     const datosBebe = {
       edadMeses,
       sexoBiologico,
@@ -144,14 +128,11 @@ if (formulario) {
     };
 
     try {
-      // Ocultamos elementos informativos previos mientras carga
       if (mensajePlaceholder) mensajePlaceholder.classList.add('hidden');
       if (cajaFinanzas) cajaFinanzas.classList.add('hidden');
 
-      // Mostramos un texto temporal de carga
       contenedorRecetas.innerHTML = '<p class="placeholder-text">Calculando requerimientos calóricos y estructurando tu menú semanal... 🍳</p>';
 
-      // CONEXIÓN EN VIVO CON TU SERVIDOR
       const respuesta = await fetch('https://menu-bebe-api.onrender.com/api/menu-personalizado', {
         method: 'POST', 
         headers: {
@@ -159,17 +140,15 @@ if (formulario) {
         },
         body: JSON.stringify({
           ...datosBebe,
-          formatoAlimentacion,
+          formatoAlimentacion: getFormatoAlimentacion(), // Extraído dinámicamente mediante la función segura
           mercaderiaEnCasa
         })
       });
 
       const resultado = await respuesta.json();
 
-      // REVISAMOS LA RESPUESTA Y DIBUJAMOS EN LA PANTALLA
       if (respuesta.ok) {
-        // 🔥 SI TODO SALIÓ BIEN, GUARDAMOS EN LOCALSTORAGE
-        guardarDatosEnStorage();
+        guardarDatosFormulario(); // Corregido para usar el nombre de función unificado
         dibujarMenuEnPantalla(resultado); 
       } else {
         contenedorRecetas.innerHTML = `<p class="placeholder-text" style="color: var(--color-precio);">Error: ${resultado.mensaje}</p>`;
@@ -206,7 +185,6 @@ function dibujarMenuEnPantalla(datos) {
   if (contenedorTabs) contenedorTabs.classList.remove('hidden');
   if (cajaFinanzas) cajaFinanzas.classList.remove('hidden');
 
-  // 2. DIBUJAR INFORME NUTRICIONAL
   if (datos.infoNutricionalBebe) {
     const infoNutri = datos.infoNutricionalBebe;
     const infoBox = document.createElement('div');
@@ -220,7 +198,7 @@ function dibujarMenuEnPantalla(datos) {
       <p style="margin-top: 5px; font-size: 0.95rem;">Según el peso, talla y edad ingresados, tu bebé se encuentra en estado de: <strong>${infoNutri.evaluacionBiometrica.estadoNutricional}</strong> (IMC: ${infoNutri.evaluacionBiometrica.imcCalculado}).</p>
       <ul style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; list-style: none; padding-left: 0;">
         <li>🔹 <strong>Meta de Energía:</strong> ${infoNutri.caloriasMeta} kcal/día</li>
-        <li>🔹 <strong>Líquidos Recommended:</strong> ${infoNutri.liquidosMeta} mL/día</li>
+        <li>🔹 <strong>Líquidos Recomendados:</strong> ${infoNutri.liquidosMeta} mL/día</li>
         <li>🥩 <strong>Proteínas:</strong> ${infoNutri.macrosMeta.proteinasGramos}g /día</li>
         <li>🥑 <strong>Grasas Buenas:</strong> ${infoNutri.macrosMeta.grasasGramos}g /día</li>
         <li>🌾 <strong>Carbohidratos:</strong> ${infoNutri.macrosMeta.carbohidratosGramos}g /día</li>
@@ -229,14 +207,12 @@ function dibujarMenuEnPantalla(datos) {
     contenedorRecetas.appendChild(infoBox);
   }
 
-  // 3. ACTUALIZAMOS RESUMEN FINANCIERO
   const formatearCLP = (numero) => {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(numero);
   };
   if (txtGasto) txtGasto.innerHTML = formatearCLP(datos.gastoSemanalCalculado || 0);
   if (txtAhorro) txtAhorro.innerHTML = formatearCLP(datos.dineroAhorradoSemanal || 0);
 
-  // 4. CREAMOS LAS GRILLAS DE PESTAÑAS
   const categoriasTipos = ['principales', 'desayunos', 'colaciones', 'postres'];
   const subGrillas = {};
 
@@ -322,7 +298,6 @@ function dibujarMenuEnPantalla(datos) {
     subGrillas['postres'].appendChild(tarjetaPostre);
   });
 
-  // CONTROLADOR DE INTERRUPTORES DE LAS PESTAÑAS
   const botonesTabs = document.querySelectorAll('.tab-btn');
   botonesTabs.forEach(boton => {
     boton.addEventListener('click', () => {
@@ -345,7 +320,7 @@ function dibujarMenuEnPantalla(datos) {
 if (btnLimpiar) {
   btnLimpiar.addEventListener('click', () => {
     formulario.reset();
-    localStorage.removeItem('menuBebeData'); // Se borra el almacenamiento local
+    localStorage.removeItem('nutribebe_datos'); 
     contenedorRecetas.innerHTML = '';
     if (mensajePlaceholder) {
       mensajePlaceholder.textContent = 'Ingresa los datos de tu bebé para calcular un menú balanceado y económico.';
@@ -355,7 +330,12 @@ if (btnLimpiar) {
   });
 }
 
-// 🔥 DISPARO AUTOMÁTICO: Carga los datos apenas la pantalla esté lista
+// Inicialización controlada y unificada de eventos al cargar la ventana
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatosDesdeStorage();
+
+  // Registrar listeners dinámicos para los cambios en inputs
+  document.querySelectorAll('input, select').forEach(elemento => {
+    elemento.addEventListener('change', guardarDatosFormulario);
+  });
 });
