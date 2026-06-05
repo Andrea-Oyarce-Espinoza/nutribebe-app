@@ -125,7 +125,8 @@ exports.generarMenuPersonalizado = async (req, res) => {
           return false;
         }
       }
-
+return true; // <-- Permitir que la receta pase si cumple los filtros
+    }); // <-- ¡AQUÍ ESTABA EL ERROR! Cerramos correctamente el .filter()
 
     const principales = recetasAptas.filter(r => r.categoria === 'principal');
     const desayunos = recetasAptas.filter(r => r.categoria === 'desayuno');
