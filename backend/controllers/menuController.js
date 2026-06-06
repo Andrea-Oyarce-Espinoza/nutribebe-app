@@ -1,5 +1,6 @@
 const Receta = require('../models/Receta');
-const PRECIOS_MERCADO_CHILE = require('../data/preciosDb');
+const IngredientPrice = require('../models/IngredientPrice');
+
 
 // --- FUNCIONES AUXILIARES INTERNAS ---
 function obtenerTodosLosIngredientes(receta) {
@@ -94,39 +95,53 @@ exports.generarMenuPersonalizado = async (req, res) => {
     const despensaUsuario = mercaderiaEnCasa || [];
 
     const perfilNutricional = calcularRequerimientosNutricionales(edadMeses, pesoKg, sexoBiologico, tallaCm);
-    const recetasDesdeAtlas = await Receta.find();
+    
+    const [recetasDesdeAtlas, listaPreciosBD] = await Promise.all([
+      Receta.find(), 
+      IngredientPrice.find()
+    ]);
+
+    const mapaPrecios = {};
+    listaPreciosBD.forEach(item => {
+      mapaPrecios[item.nombre.toLowerCase().trim()] = item.precioPromedio;
+    });
 
     const recetasAptas = recetasDesdeAtlas.map(receta => {
       let costo = 0;
       const todosLosIngredientes = obtenerTodosLosIngredientes(receta);
       
       todosLosIngredientes.forEach(ing => {
-        if (ing && ing.nombre && !despensaUsuario.includes(ing.nombre)) {
-          costo += PRECIOS_MERCADO_CHILE[ing.nombre] || 500;
+        if (ing && ing.nombre) {
+          const nombreIngrediente = ing.nombre.toLowerCase().trim();
+
+          // Si el usuario NO lo tiene en su despensa, calculamos el costo
+          if (!despensaUsuario.includes(ing.nombre)) {
+            // Buscamos en el mapa de la BD; si no existe el ingrediente, usamos 500 como salvavidas
+            costo += mapaPrecios[nombreIngrediente] || 500;
+          }
         }      
       });
       return { ...receta.toObject(), presupuestoEstimadoCLP: costo };
     }).filter(receta => {
+      // 1. Filtro de Edad Seguro
       const edadMin = receta.edadMinimaMeses !== undefined ? receta.edadMinimaMeses : 6;
       if (edadMeses < edadMin) return false;
       
+      // 2. Filtro de Alérgenos
       if (alergias && alergias.length > 0 && receta.alergenos) {
         const esAlergico = receta.alergenos.some(alergene => alergias.includes(alergene));
         if (esAlergico) return false;
       }
 
-      // 3. Nuevo filtro: Formato de Alimentación (BLW / Papilla / Mixto)
-      // Si el usuario elige "Mixto, le pueden aparecer recetas de todo tipo."
-      // Si elige "BLW" o "Papilla", debe coincidir exactamente con el formato de la receta.
+      // 3. Filtro: Formato de Alimentación (BLW / Papilla / Mixto)
       const formatoReceta = receta.formato || 'Mixto';
-
       if (formatoAlimentacion && formatoAlimentacion !== 'Mixto') {
         if (formatoReceta !== 'Mixto' && formatoReceta !== formatoAlimentacion){
           return false;
         }
       }
-return true; // <-- Permitir que la receta pase si cumple los filtros
-    }); // <-- ¡AQUÍ ESTABA EL ERROR! Cerramos correctamente el .filter()
+      return true; // <-- Permitir que la receta pase si cumple los filtros
+    });
 
     const principales = recetasAptas.filter(r => r.categoria === 'principal');
     const desayunos = recetasAptas.filter(r => r.categoria === 'desayuno');
