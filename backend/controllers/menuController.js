@@ -268,30 +268,60 @@ exports.generarMenuPersonalizado = async (req, res) => {
   }
 };
 
-// NUEVA FUNCIÓN PARA PROCESAR EL POST DE THUNDER CLIENT
+// CONTROLADOR ACTUALIZADO PARA EVITAR DUPLICADOS 🚀
 exports.crearIngrediente = async (req, res) => {
     try {
         const datos = req.body;
 
-        // Validar si viene un arreglo (inserción masiva) o un solo objeto
+        // Si envías un arreglo de ingredientes (Inserción masiva inteligente)
         if (Array.isArray(datos)) {
-            const ingredientesGuardados = await IngredientPrice.insertMany(datos);
-            return res.status(201).json({
-                mensaje: `🎉 Se insertaron ${ingredientesGuardados.length} ingredientes con éxito de forma masiva.`,
-                data: ingredientesGuardados
+            const operaciones = datos.map(ingrediente => {
+                return IngredientPrice.findOneAndUpdate(
+                    { nombre: ingrediente.nombre.trim() }, // Criterio de búsqueda: evita duplicar si coincide el nombre
+                    { 
+                        $set: {
+                            categoria: ingrediente.categoria || ingrediente.grupoNutricional, // Mapea tu grupo si viene del JSON anterior
+                            // Calcula un promedio básico si no viene explícito en el JSON
+                            precioPromedio: ingrediente.precioPromedio || Math.round(
+                                (ingrediente.preciosPorCadena.Lider + ingrediente.preciosPorCadena.Jumbo + ingrediente.preciosPorCadena.Unimarc) / 3
+                            ),
+                            // Transforma el formato plano de cadenas al arreglo semántico que requiere tu modelo de datos
+                            preciosPorCadena: Array.isArray(ingrediente.preciosPorCadena) 
+                                ? ingrediente.preciosPorCadena 
+                                : [
+                                    { supermercado: "Lider", precio: ingrediente.preciosPorCadena.Lider },
+                                    { supermercado: "Jumbo", precio: ingrediente.preciosPorCadena.Jumbo },
+                                    { supermercado: "Unimarc", precio: ingrediente.preciosPorCadena.Unimarc }
+                                ]
+                        }
+                    },
+                    { upsert: true, new: true, setDefaultsOnInsert: true } // upsert: true es la clave mágica
+                );
             });
+
+            // Ejecuta todas las verificaciones en paralelo
+            await Promise.all(operaciones);
+
+            return res.status(200).json({
+                mensaje: `🎉 Procesamiento completado. Se crearon los ingredientes nuevos y se actualizaron los existentes sin duplicar.`
+            });
+
         } else {
-            const nuevoIngrediente = new IngredientPrice(datos);
-            await nuevoIngrediente.save();
-            return res.status(201).json({
-                mensaje: "✅ Ingrediente individual guardado con éxito.",
-                data: nuevoIngrediente
+            // Manejo para un solo ingrediente individual
+            const resultado = await IngredientPrice.findOneAndUpdate(
+                { nombre: datos.nombre.trim() },
+                { $set: datos },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
+            return res.status(200).json({
+                mensaje: "✅ Ingrediente procesado correctamente de forma individual.",
+                data: resultado
             });
         }
     } catch (error) {
-        console.error("🚨 Error al guardar ingrediente:", error);
+        console.error("🚨 Error al procesar ingredientes:", error);
         res.status(500).json({
-            error: "Hubo un error en el servidor al intentar poblar los ingredientes.",
+            error: "Hubo un error en el servidor al procesar la lista.",
             detalle: error.message
         });
     }
