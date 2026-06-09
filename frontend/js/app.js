@@ -172,7 +172,84 @@ function volverAlFormulario() {
 }
 
 /* ==========================================================================
-   6. RENDERIZADO DINÁMICO DE COMPONENTES
+   6. GESTIÓN CONTROLADORA DEL MODAL EMERGENTE (POPUP)
+   ========================================================================== */
+function abrirDetalleRecetaModal(receta, subCatTitulo) {
+  const modal = document.getElementById('recipe-modal');
+  const contenedorContenido = document.getElementById('modal-body-content');
+  if (!modal || !contenedorContenido) return;
+
+  if (!receta) {
+    contenedorContenido.innerHTML = `<p style="color:#64748b; text-align:center;">No hay detalles adicionales disponibles para esta sugerencia.</p>`;
+    modal.style.display = 'flex';
+    return;
+  }
+
+  // Estilo dinámico de la píldora de formato de alimentación
+  const formatoTexto = receta.formato || receta.formatoAlimentacion || 'No especificado';
+  const colorBadge = subCatTitulo.includes('Almuerzo') ? 'background: #e8f8f0; color: #27ae60;' : 'background: #fff3cd; color: #856404;';
+
+  // Construcción limpia de la lista iterativa de ingredientes
+  const listaIngredientes = receta.ingredientes && receta.ingredientes.length > 0
+    ? receta.ingredientes.map(i => `<li style="padding: 6px 0; border-bottom: 1px dashed #f1f5f9; font-size:0.95rem; color:#334155;">• <strong>${i.cantidad} ${i.unidad}</strong> de ${i.nombre}</li>`).join('')
+    : '<li style="color:#94a3b8; font-style: italic;">No requiere ingredientes complejos registrados.</li>';
+
+  // Construcción de la preparación paso a paso
+  let preparacionHTML = '';
+  if (receta.preparacion) {
+    if (Array.isArray(receta.preparacion)) {
+      preparacionHTML = receta.preparacion.map((paso, index) => `<p style="margin: 6px 0; font-size:0.95rem; line-height:1.5; color:#475569;"><strong>${index + 1}.</strong> ${paso}</p>`).join('');
+    } else {
+      preparacionHTML = `<p style="font-size:0.95rem; line-height:1.5; color:#475569;">${receta.preparacion}</p>`;
+    }
+  } else {
+    preparacionHTML = `<p style="color:#94a3b8; font-style: italic; font-size:0.95rem;">Preparación básica hogareña / Consistencia sugerida según su formato.</p>`;
+  }
+
+  // Insertar todo el árbol de HTML estructurado dentro del Modal
+  contenedorContenido.innerHTML = `
+    <div style="text-align: center; margin-bottom: 15px;">
+      <span style="font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; color: #94a3b8;">${subCatTitulo}</span>
+      <h2 style="color: #1e293b; margin: 5px 0 10px 0; font-size: 1.4rem; font-weight: 700;">${receta.nombre}</h2>
+      <span style="display: inline-block; ${colorBadge} padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Formato: ${formatoTexto}</span>
+    </div>
+
+    ${receta.descripcion ? `
+      <div style="background: #f8fafc; border-left: 4px solid #cbd5e1; padding: 10px 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0;">
+        <p style="margin:0; font-size: 0.9rem; color: #64748b; font-style: italic; line-height: 1.4; text-align: justify;">"${receta.descripcion}"</p>
+      </div>
+    ` : ''}
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color: #1e293b; margin: 0 0 8px 0; font-size: 1rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px;">📋 Ingredientes Necesarios</h4>
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        ${listaIngredientes}
+      </ul>
+    </div>
+
+    <div>
+      <h4 style="color: #1e293b; margin: 0 0 8px 0; font-size: 1rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px;">🍳 Preparación paso a paso</h4>
+      <div style="margin-top: 8px;">
+        ${preparacionHTML}
+      </div>
+    </div>
+  `;
+
+  // Despertar el modal usando flex
+  modal.style.display = 'flex';
+
+  // Configuración de los eventos de cierre dinámicos
+  const btnCerrar = document.getElementById('close-modal');
+  if (btnCerrar) {
+    btnCerrar.onclick = () => modal.style.display = 'none';
+  }
+  window.onclick = (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  };
+}
+
+/* ==========================================================================
+   7. RENDERIZADO DINÁMICO DE COMPONENTES
    ========================================================================== */
 function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
   if (!contenedorRecetas) return;
@@ -200,10 +277,10 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
   if (txtGasto) txtGasto.textContent = `$${(datos.gastoSemanalCalculado || 0).toLocaleString('es-CL')}`;
   if (txtAhorro) txtAhorro.textContent = `$${(datos.dineroAhorradoSemanal || 0).toLocaleString('es-CL')}`;
 
-  const categoriasTipos = ['principales', 'desayunos', 'colaciones', 'postres'];
+  const categoriesTipos = ['principales', 'desayunos', 'colaciones', 'postres'];
   const subGrillas = {};
 
-  categoriasTipos.forEach(cat => {
+  categoriesTipos.forEach(cat => {
     const grid = document.createElement('div');
     grid.className = `tab-content-view ${cat === 'principales' ? '' : 'hidden'}`;
     grid.id = `grid-view-${cat}`;
@@ -214,75 +291,49 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
   Object.keys(datos.menuSemanal).forEach(dia => {
     const menuDia = datos.menuSemanal[dia];
 
-    // Almuerzo y cena
+    // --- ALMUERZO Y CENA ---
     const tarjeta = document.createElement('div');
     tarjeta.className = 'receta-card';
+    const almuerzo = menuDia.almuerzo;
 
-    // Extraemos la receta de almuerzo
-  const almuerzo = menuDia.almuerzo;
-  // Generamos la lista de ingredientes si existen
-  const ingAlmuerzo = almuerzo && almuerzo.ingredientes 
-    ? almuerzo.ingredientes.map(i => `<li style="margin-bottom: 4px; font-size: 0.85rem; color: #475569;">• ${i.cantidad} ${i.unidad} de <strong>${i.nombre}</strong></li>`).join('')
-    : '<li style="font-size: 0.85rem; color: #94a3b8;">Sin ingredientes registrados</li>';
-
-tarjeta.innerHTML = `
-    <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
-    <div style="padding:20px; display: flex; flex-direction: column; gap: 8px;">
-      <h4 style="color:#27ae60; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px; margin: 0; text-align:center;">☀️ Almuerzo / Cena</h4>
-      <p style="font-weight:600; color:#334155; font-size:1.05rem; margin: 0; text-align:center;">${almuerzo ? almuerzo.nombre : 'Plato Principal'}</p>
-      
-      ${almuerzo && almuerzo.formato ? `<span style="align-self: center; background: #e8f8f0; color: #27ae60; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${almuerzo.formato}</span>` : ''}
-      
-      ${almuerzo && almuerzo.descripcion ? `<p style="font-size: 0.85rem; color: #64748b; line-height: 1.4; margin: 8px 0 4px 0; text-align: justify;">${almuerzo.descripcion}</p>` : ''}
-      
-      <div style="margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
-        <span style="font-size: 0.8rem; font-weight: bold; color: #64748b; display: block; margin-bottom: 6px;">📋 INGREDIENTES:</span>
-        <ul style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto;">
-          ${ingAlmuerzo}
-        </ul>
-      </div>
-    </div>
-  `;
-   if (subGrillas['principales']) subGrillas['principales'].appendChild(tarjeta);
-  
-  // Mapeo dinámico de subcategorías (Desayuno, Colación, Postre)
-  ['desayuno', 'colacionTarde', 'postre'].forEach(subCat => {
-    const filaTab = document.createElement('div');
-    filaTab.className = 'receta-card';
-    const itemComida = menuDia[subCat];
-    const destino = subCat === 'desayuno' ? 'desayunos' : subCat === 'colacionTarde' ? 'colaciones' : 'postres';
-    const tituloSeccion = subCat === 'desayuno' ? '🥞 Desayuno' : subCat === 'colacionTarde' ? '🍎 Colación' : '🍓 Postre';
-    
-    // Generamos la lista de ingredientes para las subcategorías
-    const ingSub = itemComida && itemComida.ingredientes 
-      ? itemComida.ingredientes.map(i => `<li style="margin-bottom: 4px; font-size: 0.85rem; color: #475569;">• ${i.cantidad} ${i.unidad} de <strong>${i.nombre}</strong></li>`).join('')
-      : '<li style="font-size: 0.85rem; color: #94a3b8;">Sin ingredientes registrados</li>';
-
-    filaTab.innerHTML = `
+    tarjeta.innerHTML = `
       <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
-      <div style="padding:20px; display: flex; flex-direction: column; gap: 8px;">
-        <h4 style="color:var(--color-secundario); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px; margin: 0; text-align:center;">${tituloSeccion}</h4>
-        <p style="font-weight:600; color:#334155; font-size:1.05rem; margin: 0; text-align:center;">${itemComida ? itemComida.nombre : 'Sugerencia natural de la estación'}</p>
-        
-        ${itemComida && itemComida.formato ? `<span style="align-self: center; background: #fff3cd; color: #856404; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${itemComida.formato}</span>` : ''}
-        
-        ${itemComida && itemComida.descripcion ? `<p style="font-size: 0.85rem; color: #64748b; line-height: 1.4; margin: 8px 0 4px 0; text-align: justify;">${itemComida.descripcion}</p>` : ''}
-        
-        ${itemComida ? `
-        <div style="margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
-          <span style="font-size: 0.8rem; font-weight: bold; color: #64748b; display: block; margin-bottom: 6px;">📋 INGREDIENTES:</span>
-          <ul style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto;">
-            ${ingSub}
-          </ul>
-        </div>
-        ` : ''}
+      <div style="padding:20px; text-align:center;">
+        <h4 style="color:#27ae60; margin-bottom:8px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">☀️ Almuerzo / Cena</h4>
+        <p style="font-weight:600; color:#334155; font-size:1.05rem; margin:0 0 6px 0;">${almuerzo ? almuerzo.nombre : 'Plato Principal'}</p>
+        <span style="font-size:0.75rem; color:#a0aec0; background:#f1f5f9; padding:2px 8px; border-radius:10px;">🔍 Ver preparación e ingredientes</span>
       </div>
     `;
-    if (subGrillas[destino]) subGrillas[destino].appendChild(filaTab);
-  });
-    });
+    
+    // Al hacer clic, se abre el modal con todos los datos detallados
+    tarjeta.addEventListener('click', () => abrirDetalleRecetaModal(almuerzo, '☀️ Almuerzo / Cena'));
+    if (subGrillas['principales']) subGrillas['principales'].appendChild(tarjeta);
+    
+    // --- SUBCATEGORÍAS DINÁMICAS (Desayuno, Colación, Postre) ---
+    ['desayuno', 'colacionTarde', 'postre'].forEach(subCat => {
+      const filaTab = document.createElement('div');
+      filaTab.className = 'receta-card';
+      const itemComida = menuDia[subCat];
+      const destino = subCat === 'desayuno' ? 'desayunos' : subCat === 'colacionTarde' ? 'colaciones' : 'postres';
+      const tituloSeccion = subCat === 'desayuno' ? '🥞 Desayuno' : subCat === 'colacionTarde' ? '🍎 Colación' : '🍓 Postre';
+      
+      filaTab.innerHTML = `
+        <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
+        <div style="padding:20px; text-align:center;">
+          <h4 style="color:var(--color-secundario); margin-bottom:8px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">${tituloSeccion}</h4>
+          <p style="font-weight:600; color:#334155; font-size:1.05rem; margin:0 0 6px 0;">${itemComida ? itemComida.nombre : 'Sugerencia natural de la estación'}</p>
+          ${itemComida ? `<span style="font-size:0.75rem; color:#a0aec0; background:#f1f5f9; padding:2px 8px; border-radius:10px;">🔍 Ver preparación e ingredientes</span>` : ''}
+        </div>
+      `;
 
-  // Manejo de clicks en las subpestañas
+      if (itemComida) {
+        filaTab.addEventListener('click', () => abrirDetalleRecetaModal(itemComida, tituloSeccion));
+      }
+      if (subGrillas[destino]) subGrillas[destino].appendChild(filaTab);
+    });
+  });
+
+  // Manejo de clicks en las subpestañas superiores (Fuera del bucle)
   const botonesTabs = document.querySelectorAll('.tab-btn');
   botonesTabs.forEach(boton => {
     boton.addEventListener('click', () => {

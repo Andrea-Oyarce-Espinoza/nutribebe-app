@@ -324,11 +324,13 @@ input[type="number"]:focus, select:focus {
   display: flex;
   flex-direction: column;
   width: 100%;
-  transition: transform 0.2s;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .receta-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
 /* --- PANEL INFORME NUTRICIONAL PEDIÁTRICO --- */
