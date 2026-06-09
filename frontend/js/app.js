@@ -217,32 +217,68 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
     // Almuerzo y cena
     const tarjeta = document.createElement('div');
     tarjeta.className = 'receta-card';
-    tarjeta.innerHTML = `
+
+    // Extraemos la receta de almuerzo
+  const almuerzo = menuDia.almuerzo;
+  // Generamos la lista de ingredientes si existen
+  const ingAlmuerzo = almuerzo && almuerzo.ingredientes 
+    ? almuerzo.ingredientes.map(i => `<li style="margin-bottom: 4px; font-size: 0.85rem; color: #475569;">• ${i.cantidad} ${i.unidad} de <strong>${i.nombre}</strong></li>`).join('')
+    : '<li style="font-size: 0.85rem; color: #94a3b8;">Sin ingredientes registrados</li>';
+
+tarjeta.innerHTML = `
+    <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
+    <div style="padding:20px; display: flex; flex-direction: column; gap: 8px;">
+      <h4 style="color:#27ae60; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px; margin: 0; text-align:center;">☀️ Almuerzo / Cena</h4>
+      <p style="font-weight:600; color:#334155; font-size:1.05rem; margin: 0; text-align:center;">${almuerzo ? almuerzo.nombre : 'Plato Principal'}</p>
+      
+      ${almuerzo && almuerzo.formato ? `<span style="align-self: center; background: #e8f8f0; color: #27ae60; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${almuerzo.formato}</span>` : ''}
+      
+      ${almuerzo && almuerzo.descripcion ? `<p style="font-size: 0.85rem; color: #64748b; line-height: 1.4; margin: 8px 0 4px 0; text-align: justify;">${almuerzo.descripcion}</p>` : ''}
+      
+      <div style="margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+        <span style="font-size: 0.8rem; font-weight: bold; color: #64748b; display: block; margin-bottom: 6px;">📋 INGREDIENTES:</span>
+        <ul style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto;">
+          ${ingAlmuerzo}
+        </ul>
+      </div>
+    </div>
+  `;
+   if (subGrillas['principales']) subGrillas['principales'].appendChild(tarjeta);
+  
+  // Mapeo dinámico de subcategorías (Desayuno, Colación, Postre)
+  ['desayuno', 'colacionTarde', 'postre'].forEach(subCat => {
+    const filaTab = document.createElement('div');
+    filaTab.className = 'receta-card';
+    const itemComida = menuDia[subCat];
+    const destino = subCat === 'desayuno' ? 'desayunos' : subCat === 'colacionTarde' ? 'colaciones' : 'postres';
+    const tituloSeccion = subCat === 'desayuno' ? '🥞 Desayuno' : subCat === 'colacionTarde' ? '🍎 Colación' : '🍓 Postre';
+    
+    // Generamos la lista de ingredientes para las subcategorías
+    const ingSub = itemComida && itemComida.ingredientes 
+      ? itemComida.ingredientes.map(i => `<li style="margin-bottom: 4px; font-size: 0.85rem; color: #475569;">• ${i.cantidad} ${i.unidad} de <strong>${i.nombre}</strong></li>`).join('')
+      : '<li style="font-size: 0.85rem; color: #94a3b8;">Sin ingredientes registrados</li>';
+
+    filaTab.innerHTML = `
       <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
-      <div style="padding:20px; text-align:center;">
-        <h4 style="color:#27ae60; margin-bottom:8px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">☀️ Almuerzo / Cena</h4>
-        <p style="font-weight:600; color:#334155; font-size:1.05rem;">${menuDia.almuerzo.nombre}</p>
+      <div style="padding:20px; display: flex; flex-direction: column; gap: 8px;">
+        <h4 style="color:var(--color-secundario); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px; margin: 0; text-align:center;">${tituloSeccion}</h4>
+        <p style="font-weight:600; color:#334155; font-size:1.05rem; margin: 0; text-align:center;">${itemComida ? itemComida.nombre : 'Sugerencia natural de la estación'}</p>
+        
+        ${itemComida && itemComida.formato ? `<span style="align-self: center; background: #fff3cd; color: #856404; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${itemComida.formato}</span>` : ''}
+        
+        ${itemComida && itemComida.descripcion ? `<p style="font-size: 0.85rem; color: #64748b; line-height: 1.4; margin: 8px 0 4px 0; text-align: justify;">${itemComida.descripcion}</p>` : ''}
+        
+        ${itemComida ? `
+        <div style="margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+          <span style="font-size: 0.8rem; font-weight: bold; color: #64748b; display: block; margin-bottom: 6px;">📋 INGREDIENTES:</span>
+          <ul style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto;">
+            ${ingSub}
+          </ul>
+        </div>
+        ` : ''}
       </div>
     `;
-    if (subGrillas['principales']) subGrillas['principales'].appendChild(tarjeta);
-    
-    // Mapeo dinámico de subcategorías
-    ['desayuno', 'colacionTarde', 'postre'].forEach(subCat => {
-      const filaTab = document.createElement('div');
-      filaTab.className = 'receta-card';
-      const itemComida = menuDia[subCat];
-      const destino = subCat === 'desayuno' ? 'desayunos' : subCat === 'colacionTarde' ? 'colaciones' : 'postres';
-      const tituloSeccion = subCat === 'desayuno' ? '🥞 Desayuno' : subCat === 'colacionTarde' ? '🍎 Colación' : '🍓 Postre';
-      
-      filaTab.innerHTML = `
-        <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
-        <div style="padding:20px; text-align:center;">
-          <h4 style="color:var(--color-secundario); margin-bottom:8px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">${tituloSeccion}</h4>
-          <p style="font-weight:600; color:#334155; font-size:1.05rem;">${itemComida ? itemComida.nombre : 'Sugerencia natural de la estación'}</p>
-        </div>
-      `;
-      if (subGrillas[destino]) subGrillas[destino].appendChild(filaTab);
-    });
+    if (subGrillas[destino]) subGrillas[destino].appendChild(filaTab);
   });
 
   // Manejo de clicks en las subpestañas
