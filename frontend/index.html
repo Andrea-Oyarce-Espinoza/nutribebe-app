@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NutriBebé - Menús Infantiles</title>
   
-  <!-- Vinculación del nuevo Favicon -->
-  <link rel="icon" type="image/png" href="logo.png">
+  <!-- Vinculación de Favicon apuntando a carpeta assets -->
+  <link class="js-favicon" rel="icon" type="image/png" href="assets/logo.png">
   
   <!-- Vinculación del Manifiesto para App Móvil (PWA) -->
   <link rel="manifest" href="manifest.json">
@@ -21,79 +21,78 @@
     <!-- ENCABEZADO PRINCIPAL CON LOGO -->
     <header class="main-header">
       <div class="logo-container">
-        <img src="assets/logo.png" alt="NutriBebe Logo" class="main-logo">
+        <img src="assets/logo.png" alt="NutriBebé Logo" class="main-logo">
       </div>
       <p>Menos tiempo planificando, más tiempo en familia</p>
     </header>
 
     <!-- DASHBOARD PRINCIPAL -->
-   <main class="dashboard-moderno">
+    <main class="dashboard-moderno">
 
-    <section id="vista-paso1" class="seccion-paso fade-in">
-      <div class="card-formulario">
-        <h2>Datos del Bebé</h2>
-        <p class="subtitulo-seccion">Configura el perfil para calcular los requerimientos y optimizar tu presupuesto </p>
+      <!-- PASO 1: FORMULARIO DE ENTRADA -->
+      <section id="vista-paso1" class="seccion-paso fade-in">
+        <div class="card-formulario">
+          <h2>Datos del Bebé</h2>
+          <p class="subtitulo-seccion">Configura el perfil para calcular los requerimientos y optimizar tu presupuesto</p>
 
-        <form id="filter-form">
-          <div class="form-group row-biometrica">
-            <div>
-              <label for="age">Edad (en meses):</label>
-              <input type="number" id="age" name="age" min="6" max="60" placeholder="Ej: 18" required>
-              <span id="age-conversion" class="conversion-text"></span>
+          <form id="filter-form">
+            <div class="form-group row-biometrica">
+              <div>
+                <label for="age">Edad (en meses):</label>
+                <input type="number" id="age" name="age" min="6" max="60" placeholder="Ej: 18" required>
+                <span id="age-conversion" class="conversion-text"></span>
+              </div>
+              <div>
+                <label for="gender">Sexo biológico:</label>
+                <select name="gender" id="gender" required>
+                  <option value="" disabled selected>Selecciona...</option>
+                  <option value="femenino">Femenino ♀</option>
+                  <option value="masculino">Masculino ♂</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label for="gender">Sexo biológico:</label>
-              <select name="gender" id="gender" required>
-                <option value="" disabled selected>Selecciona...</option>
-                <option value="femenino">Femenino ♀</option>
-                <option value="masculino">Masculino ♂</option>
+
+            <div class="form-group">
+              <label for="format">Formato de Alimentación:</label>
+              <select name="format" id="format" required>
+                <option value="Papilla">Papilla / Puré</option>
+                <option value="BLW">Baby Led Weaning (BLW)</option>
+                <option value="Mixto" selected>Enfoque Mixto</option>
               </select>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="format">Formato de Alimentación:</label>
-            <select name="format" id="format" required>
-              <option value="Papilla">Papilla / Puré</option>
-              <option value="BLW">Baby Led Weaning (BLW)</option>
-              <option value="Mixto" selected>Enfoque Mixto</option>
-            </select>
-          </div>
-
-          <div class="form-group row-biometrica">
-            <div>
-              <label for="weight">Peso actual (en kg):</label>
-              <input type="number" id="weight" name="weight" min="3" max="25" step="0.1" placeholder="Ej: 8.5" required>
+            <div class="form-group row-biometrica">
+              <div>
+                <label for="weight">Peso actual (en kg):</label>
+                <input type="number" id="weight" name="weight" min="3" max="25" step="0.1" placeholder="Ej: 8.5" required>
+              </div>
+              <div>
+                <label for="height">Talla / Estatura (en cm):</label>
+                <input type="number" id="height" name="height" min="50" max="110" step="0.1" placeholder="Ej: 68.5" required>
+              </div>
             </div>
-            <div>
-              <label for="height">Talla / Estatura (en cm):</label>
-              <input type="number" id="height" name="height" min="50" max="110" step="0.1" placeholder="Ej: 68.5" required>
+
+            <div class="form-group">
+              <label for="budget">Presupuesto Máximo Diario (CLP):</label>
+              <input type="number" id="budget" name="budget" min="0" placeholder="Ej: 5000" required>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="budget">Presupuesto Máximo Diario (CLP):</label>
-            <input type="number" id="budget" name="budget" min="0" placeholder="Ej: 5000" required>
-          </div>
-
-          <div class="form-group">
-            <label>Excluir Alérgenos:</label>
-            <div class="checkbox-group">
-              <label><input type="checkbox" name="allergens" value="huevo"> Huevo</label>
-              <label><input type="checkbox" name="allergens" value="leche"> Lácteos</label>
-              <label><input type="checkbox" name="allergens" value="maní"> Maní</label>
-              <label><input type="checkbox" name="allergens" value="Pescado"> Pescado</label>
-              <label><input type="checkbox" name="allergens" value="gluten"> Gluten</label>
-              <label><input type="checkbox" name="allergens" value="soja"> Soja</label>
+            <div class="form-group">
+              <label>Excluir Alérgenos:</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" name="allergens" value="huevo"> Huevo</label>
+                <label><input type="checkbox" name="allergens" value="leche"> Lácteos</label>
+                <label><input type="checkbox" name="allergens" value="maní"> Maní</label>
+                <label><input type="checkbox" name="allergens" value="Pescado"> Pescado</label>
+                <label><input type="checkbox" name="allergens" value="gluten"> Gluten</label>
+                <label><input type="checkbox" name="allergens" value="soja"> Soja</label>
+              </div>
             </div>
-          </div>
 
-          <div class="form-group animate-fade-in">
-            <label class="form-label">
-              Alimentos que ya tienes en casa (Se descontarán del total):
-            </label>
-            <div class="checkbox-group" id="despensa-container">
-              <label class="checkbox-label"><input type="checkbox" name="despensa" value="Zapallo Italiano"> Zapallo Italiano</label>
+            <div class="form-group">
+              <label class="form-label">Alimentos que ya tienes en casa (Se descontarán del total):</label>
+              <div class="checkbox-group" id="despensa-container">
+                <label class="checkbox-label"><input type="checkbox" name="despensa" value="Zapallo Italiano"> Zapallo Italiano</label>
                 <label class="checkbox-label"><input type="checkbox" name="despensa" value="Zanahoria"> Zanahoria</label>
                 <label class="checkbox-label"><input type="checkbox" name="despensa" value="Pechuga de Pollo"> Pechuga de Pollo</label>
                 <label class="checkbox-label"><input type="checkbox" name="despensa" value="Posta rosada picada"> Posta Rosada</label>
@@ -101,82 +100,87 @@
                 <label class="checkbox-label"><input type="checkbox" name="despensa" value="Aceite de Oliva"> Aceite de Oliva</label>
                 <label class="checkbox-label"><input type="checkbox" name="despensa" value="Huevo"> Huevo</label>
                 <label class="checkbox-label"><input type="checkbox" name="despensa" value="Arroz"> Arroz</label>
+              </div>
             </div>
-          </div>
 
-          <div class="botones-acciones">
-            <button type="submit" class="btn-primary-moderno">Generar Menú Semanal</button>
-            <button type="button" id="btn-clear" class="btn-secondary-moderno">Limpiar</button>
-          </div>
-        </form>
+            <div class="botones-acciones">
+              <button type="submit" class="btn-primary-moderno">Generar Menú Semanal</button>
+              <button type="button" id="btn-clear" class="btn-secondary-moderno">Limpiar</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- LOADER DE PANTALLA INTERMEDIO -->
+      <div id="loader-pantalla" class="loader-container hidden">
+        <div class="spinner-moderno"></div>
+        <p id="loader-texto">Procesando requerimientos nutricionales...</p>
       </div>
-    </section>
 
-    <div id="loader-pantalla" class="loader-container hidden">
-      <div class="spinner-moderno"></div>
-      <p id="loader-texto">Procesando requerimientos nutricionales...</p>
-    </div>
-
-<nav id="navegacion-resultados" class="nav-resultados hidden">
-        <button id="btn-nav-menu" class="nav-btn active" onclick="cambiarPasoResultados('menu')">
+      <!-- BARRA DE NAVEGACIÓN COMPACTA DE RESULTADOS -->
+      <nav id="navegacion-resultados" class="nav-resultados hidden">
+        <button id="btn-nav-menu" class="nav-btn active" type="button">
           <span>📅</span> <span class="nav-text-desktop">Menú Recomendado</span><span class="nav-text-mobile">Menú</span>
         </button>
-        <button id="btn-nav-compras" class="nav-btn" onclick="cambiarPasoResultados('compras')">
+        <button id="btn-nav-compras" class="nav-btn" type="button">
           <span>🛒</span> <span class="nav-text-desktop">Lista y Precios</span><span class="nav-text-mobile">Compras</span>
         </button>
-        <button id="btn-nav-volver" class="nav-btn btn-volver-atras" onclick="volverAlFormulario()">
+        <button id="btn-nav-volver" class="nav-btn btn-volver-atras" type="button">
           <span>🔄</span> <span class="nav-text-desktop">Cambiar Perfil</span><span class="nav-text-mobile">Datos</span>
         </button>
       </nav>
 
-    <section id="vista-paso2" class="seccion-paso hidden fade-in">
-      <div class="card-resultado-moderna">
-        <div class="tabs-container" id="menu-tabs">
-          <button class="tab-btn active" data-tab="principales">Almuerzo / Cena</button>
-          <button class="tab-btn" data-tab="desayunos">Desayuno</button>
-          <button class="tab-btn" data-tab="colaciones">Colaciones</button>
-          <button class="tab-btn" data-tab="postres">Postres</button>
-        </div>
-
-        <div id="recipes-container" class="recetas-grid-moderna"></div>
-      </div>
-    </section>
-
-    <section id="vista-paso3" class="seccion-paso hidden fade-in">
-      <div class="card-resultado-modern">
-
-        <div id="finance-summary" class="resumen-financiero-box">
-          <div class="resumen-card-mini cost">Gasto Estimado Base Semanal: <span id="total-cost">$0</span></div>
-          <div class="resumen-card-mini saving">Tu Ahorro por Despensa: <span id="total-savings">$0</span></div>
-        </div>
-
-        <h3 class="titulo-tabla-seccion">Podio Comparativo de Supermercados</h3>
-        <div id="podio-supermercados" class="podio-container-flex"></div>
-
-        <div class="tabla-compras-wrapper">
-          <h3 class="titulo-tabla-seccion">Lista Unificada de Compras (Cantidades Consolidadas)</h3>
-          <p class="leyenda-despensa">Los ingredientes seleccionados de tu despensa ya fueron descontados automáticamente.</p>
-
-          <div class="tabla-scroll">
-            <table class="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Ingredientes</th>
-                  <th style="text-align: center;">Cantidad</th>
-                  <th style="text-align: right;">Lider</th>
-                  <th style="text-align: right;">Jumbo</th>
-                  <th style="text-align: right;">Unimarc</th>
-                </tr>
-              </thead>
-              <tbody id="cuerpo-tabla-compras"></tbody>
-            </table>
+      <!-- PASO 2: VISTA DE MENÚS Y RECETAS (AQUÍ IRÁ EL INFORME DINÁMICO) -->
+      <section id="vista-paso2" class="seccion-paso hidden fade-in">
+        <div class="card-resultado-moderna">
+          <div class="tabs-container" id="menu-tabs">
+            <button class="tab-btn active" data-tab="principales">Almuerzo / Cena</button>
+            <button class="tab-btn" data-tab="desayunos">Desayuno</button>
+            <button class="tab-btn" data-tab="colaciones">Colaciones</button>
+            <button class="tab-btn" data-tab="postres">Postres</button>
           </div>
-        </div>
 
-      </div>
-    </section>
-    
-   </main>
+          <!-- Contenedor Maestro unificado con estilos CSS -->
+          <div id="recipes-container" class="recetas-grid-moderna"></div>
+        </div>
+      </section>
+
+      <!-- PASO 3: VISTA DE COMPRAS Y FINANZAS -->
+      <section id="vista-paso3" class="seccion-paso hidden fade-in">
+        <div class="card-resultado-moderna">
+
+          <div id="finance-summary" class="resumen-financiero-box">
+            <div class="resumen-card-mini cost">Gasto Estimado Base Semanal: <span id="total-cost">$0</span></div>
+            <div class="resumen-card-mini saving">Tu Ahorro por Despensa: <span id="total-savings">$0</span></div>
+          </div>
+
+          <h3 class="titulo-tabla-seccion">Podio Comparativo de Supermercados</h3>
+          <div id="podio-supermercados" class="podio-container-flex"></div>
+
+          <div class="tabla-compras-wrapper">
+            <h3 class="titulo-tabla-seccion">Lista Unificada de Compras (Cantidades Consolidadas)</h3>
+            <p class="leyenda-despensa">Los ingredientes seleccionados de tu despensa ya fueron descontados automáticamente.</p>
+
+            <div class="tabla-scroll">
+              <table class="tabla-moderna">
+                <thead>
+                  <tr>
+                    <th>Ingredientes</th>
+                    <th style="text-align: center;">Cantidad</th>
+                    <th style="text-align: right;">Lider</th>
+                    <th style="text-align: right;">Jumbo</th>
+                    <th style="text-align: right;">Unimarc</th>
+                  </tr>
+                </thead>
+                <tbody id="cuerpo-tabla-compras"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      
+    </main>
   </div>
 
   <!-- Script Principal -->

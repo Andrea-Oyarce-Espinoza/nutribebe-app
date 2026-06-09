@@ -39,7 +39,7 @@ if (inputEdad) {
 }
 
 /* ==========================================================================
-   2. CONTROL DE NAVEGACIÓN ENTRE VISTAS (PASO A PASO)
+   2. CONTROL DE NAVEGACIÓN ENTRE VISTAS (PASO A PASO NUEVO)
    ========================================================================== */
 function cambiarPasoResultados(objetivo) {
   const vistaMenu = document.getElementById('vista-paso2');
@@ -67,6 +67,19 @@ function volverAlFormulario() {
   document.getElementById('vista-paso3').classList.add('hidden');
 }
 
+// Vinculación de manejadores de eventos modernos para la navegación superior
+document.addEventListener('DOMContentLoaded', () => {
+  const btnNavMenu = document.getElementById('btn-nav-menu');
+  const btnNavCompras = document.getElementById('btn-nav-compras');
+  const btnNavVolver = document.getElementById('btn-nav-volver');
+
+  if (btnNavMenu && btnNavCompras && btnNavVolver) {
+    btnNavMenu.addEventListener('click', () => cambiarPasoResultados('menu'));
+    btnNavCompras.addEventListener('click', () => cambiarPasoResultados('compras'));
+    btnNavVolver.addEventListener('click', () => volverAlFormulario());
+  }
+});
+
 /* ==========================================================================
    3. ENVÍO DEL FORMULARIO Y PETICIÓN AL BACKEND
    ========================================================================== */
@@ -88,7 +101,6 @@ if (formulario) {
     const datosBebe = { edadMeses, sexoBiologico, pesoKg, tallaCm, alergias, presupuestoMaximoCLP, formatoAlimentacion: getFormatoAlimentacion() };
 
     try {
-      // Activamos Loader, ocultamos Formulario
       vistaForm.classList.add('hidden');
       loader.classList.remove('hidden');
 
@@ -102,17 +114,14 @@ if (formulario) {
       loader.classList.add('hidden');
 
       if (respuesta.ok) {
-        // Guardamos en LocalStorage
         localStorage.setItem('nutribebe_datos', JSON.stringify(datosBebe));
         
-        // Renderizamos componentes
         dibujarMenuEnPantalla(resultado);
         
         if (resultado.finanzasSupermercados) {
           mostrarFinanzasYCompras(resultado.finanzasSupermercados);
         }
 
-        // Desplegamos barra de navegación y activamos el Paso 2 (Menú)
         document.getElementById('navegacion-resultados').classList.remove('hidden');
         cambiarPasoResultados('menu');
       } else {
@@ -134,19 +143,16 @@ if (formulario) {
 function dibujarMenuEnPantalla(datos) {
   contenedorRecetas.innerHTML = '';
   
-  // Limpiar informes de requerimientos previos si existían
   const informeViejo = document.getElementById('informe-nutricional-dinamico');
   if (informeViejo) informeViejo.remove();
 
   if (!datos.menuSemanal || Object.keys(datos.menuSemanal).length === 0) return;
 
-  // Inyectar Informe de requerimientos arriba de las pestañas en el Paso 2
   if (datos.infoNutricionalBebe) {
     const infoNutri = datos.infoNutricionalBebe;
     const infoBox = document.createElement('div');
     infoBox.id = 'informe-nutricional-dinamico';
     infoBox.className = 'alert-box-container';
-    infoBox.style.marginBottom = '20px';
     infoBox.innerHTML = `
       <h3>📊 Informe de Requerimientos Nutricionales</h3>
       <p>Estado del bebé: <strong>${infoNutri.evaluacionBiometrica.estadoNutricional}</strong> (IMC: ${infoNutri.evaluacionBiometrica.imcCalculado})</p>
@@ -155,7 +161,6 @@ function dibujarMenuEnPantalla(datos) {
     document.getElementById('vista-paso2').prepend(infoBox);
   }
 
-  // Actualizar indicadores numéricos simples
   if (txtGasto) txtGasto.textContent = `$${(datos.gastoSemanalCalculado || 0).toLocaleString('es-CL')}`;
   if (txtAhorro) txtAhorro.textContent = `$${(datos.dineroAhorradoSemanal || 0).toLocaleString('es-CL')}`;
 
@@ -164,7 +169,8 @@ function dibujarMenuEnPantalla(datos) {
 
   categoriasTipos.forEach(cat => {
     const grid = document.createElement('div');
-    grid.className = `recetas-grid tab-content-view ${cat === 'principales' ? '' : 'hidden'}`;
+    // Mantenemos la consistencia estructural usando la grilla corregida
+    grid.className = `tab-content-view ${cat === 'principales' ? '' : 'hidden'}`;
     grid.id = `grid-view-${cat}`;
     contenedorRecetas.appendChild(grid);
     subGrillas[cat] = grid;
@@ -185,7 +191,7 @@ function dibujarMenuEnPantalla(datos) {
     `;
     subGrillas['principales'].appendChild(tarjeta);
     
-    // Mapeo básico para el resto de categorías (Desayuno, colaciones, postres)
+    // Mapeo dinámico corregido para el resto de categorías
     ['desayuno', 'colacionTarde', 'postre'].forEach(subCat => {
       const filaTab = document.createElement('div');
       filaTab.className = 'receta-card';
@@ -202,7 +208,6 @@ function dibujarMenuEnPantalla(datos) {
     });
   });
 
-  // Switcher de pestañas internas
   const botonesTabs = document.querySelectorAll('.tab-btn');
   botonesTabs.forEach(boton => {
     boton.addEventListener('click', () => {
