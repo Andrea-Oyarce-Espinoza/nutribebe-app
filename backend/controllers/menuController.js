@@ -267,3 +267,35 @@ exports.generarMenuPersonalizado = async (req, res) => {
     res.status(500).json({ mensaje: 'Error al procesar el menú', error: error.message });
   }
 };
+const IngredientPrice = require('../models/IngredientPrice'); // Asegúrate de que apunte bien a tu modelo
+
+// ... (aquí están tus otras funciones como obtenerRecetas, crearReceta, etc.)
+
+// NUEVA FUNCIÓN PARA PROCESAR EL POST DE THUNDER CLIENT
+exports.crearIngrediente = async (req, res) => {
+    try {
+        const datos = req.body;
+
+        // Validar si viene un arreglo (inserción masiva) o un solo objeto
+        if (Array.isArray(datos)) {
+            const ingredientesGuardados = await IngredientPrice.insertMany(datos);
+            return res.status(201).json({
+                mensaje: `🎉 Se insertaron ${ingredientesGuardados.length} ingredientes con éxito de forma masiva.`,
+                data: ingredientesGuardados
+            });
+        } else {
+            const nuevoIngrediente = new IngredientPrice(datos);
+            await nuevoIngrediente.save();
+            return res.status(201).json({
+                mensaje: "✅ Ingrediente individual guardado con éxito.",
+                data: nuevoIngrediente
+            });
+        }
+    } catch (error) {
+        console.error("🚨 Error al guardar ingrediente:", error);
+        res.status(500).json({
+            error: "Hubo un error en el servidor al intentar poblar los ingredientes.",
+            detalle: error.message
+        });
+    }
+};

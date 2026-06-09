@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 const menuController = require('../controllers/menuController');
 
-// Rutas mapeadas semánticamente
+// Rutas para las Recetas 
 router.get('/recetas', menuController.obtenerRecetas);
 router.post('/recetas', menuController.crearReceta);
+
+// RUTA NUEVA: Para manejar los ingredientes desde Thunder Client 
+router.post('/ingredientes', menuController.crearIngrediente);
+
+// Ruta para el Algoritmo 
 router.post('/menu-personalizado', menuController.generarMenuPersonalizado);
 
 module.exports = router;
