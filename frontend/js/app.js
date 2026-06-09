@@ -185,28 +185,31 @@ function abrirDetalleRecetaModal(receta, subCatTitulo) {
     return;
   }
 
-  // Estilo dinámico de la píldora de formato de alimentación
+  // Ajuste Flexible de Propiedades (Soporta base de datos actual)
   const formatoTexto = receta.formato || receta.formatoAlimentacion || 'No especificado';
   const colorBadge = subCatTitulo.includes('Almuerzo') ? 'background: #e8f8f0; color: #27ae60;' : 'background: #fff3cd; color: #856404;';
 
-  // Construcción limpia de la lista iterativa de ingredientes
+  // 1. Mapeo de Ingredientes
   const listaIngredientes = receta.ingredientes && receta.ingredientes.length > 0
-    ? receta.ingredientes.map(i => `<li style="padding: 6px 0; border-bottom: 1px dashed #f1f5f9; font-size:0.95rem; color:#334155;">• <strong>${i.cantidad} ${i.unidad}</strong> de ${i.nombre}</li>`).join('')
-    : '<li style="color:#94a3b8; font-style: italic;">No requiere ingredientes complejos registrados.</li>';
+    ? receta.ingredientes.map(i => `<li style="padding: 6px 0; border-bottom: 1px dashed #f1f5f9; font-size:0.95rem; color:#334155;">• <strong>${i.cantidad || ''} ${i.unidad || ''}</strong> de ${i.nombre|| i}</li>`).join('')
+    : '<li style="color:#94a3b8; font-style: italic;">No requiere ingredientes complejos registrados (Fruta picada/Leche).</li>';
 
-  // Construcción de la preparación paso a paso
+  // 2. Mapeo Flexible de Preparación (Soporta tanto .preparacion como .pasos de Atlas)
+  const pasosPreparacion = receta.pasos || receta.preparacion;
   let preparacionHTML = '';
-  if (receta.preparacion) {
-    if (Array.isArray(receta.preparacion)) {
-      preparacionHTML = receta.preparacion.map((paso, index) => `<p style="margin: 6px 0; font-size:0.95rem; line-height:1.5; color:#475569;"><strong>${index + 1}.</strong> ${paso}</p>`).join('');
+
+  if (pasosPreparacion && pasosPreparacion.length > 0) {
+    if (Array.isArray(pasosPreparacion)) {
+      preparacionHTML = pasosPreparacion.map((paso, index) => `<p style="margin: 6px 0; font-size:0.95rem; line-height:1.5; color:#475569;"><strong>${index + 1}.</strong> ${paso}</p>`).join('');
     } else {
-      preparacionHTML = `<p style="font-size:0.95rem; line-height:1.5; color:#475569;">${receta.preparacion}</p>`;
+      preparacionHTML = `<p style="font-size:0.95rem; line-height:1.5; color:#475569;">${pasosPreparacion}</p>`;
     }
   } else {
-    preparacionHTML = `<p style="color:#94a3b8; font-style: italic; font-size:0.95rem;">Preparación básica hogareña / Consistencia sugerida según su formato.</p>`;
+    // Si el array 'pasos' en Atlas está vacío, mostrará este mensaje seguro:
+    preparacionHTML = `<p style="color:#94a3b8; font-style: italic; font-size:0.95rem;">Consistencia e indicaciones sugeridas según su formato de alimentación básica.</p>`;
   }
 
-  // Insertar todo el árbol de HTML estructurado dentro del Modal
+  // Insertar contenido estructuradodentro del Modal 
   contenedorContenido.innerHTML = `
     <div style="text-align: center; margin-bottom: 15px;">
       <span style="font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; color: #94a3b8;">${subCatTitulo}</span>
