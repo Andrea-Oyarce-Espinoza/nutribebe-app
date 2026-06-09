@@ -593,3 +593,97 @@ button, .btn-secundario {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
    }
+
+   /* ==========================================================================
+   MÓDULO RESPONSIVO PARA VISTA MÓVIL (ESTILO APP NATIVA)
+   ========================================================================== */
+
+/* Por defecto, ocultamos las etiquetas exclusivas de móvil */
+.nav-text-mobile {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  /* 1. Dashboard y Contenedores */
+  .dashboard-moderno {
+    padding: 10px 5px;
+  }
+  
+  .card-formulario, .card-resultado-moderna {
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  /* 2. Formulario: Pasar de filas dobles a filas verticales simples */
+  .row-biometrica {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* 3. Botones del Formulario en Bloque Vertical */
+  .botones-acciones {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .btn-primary-moderno, .btn-secondary-moderno {
+    width: 100%;
+    padding: 16px; /* Más grande para facilitar el clic táctil */
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  /* 4. Barra de Navegación Flotante Superior */
+  .nav-resultados {
+    gap: 6px;
+    padding: 6px;
+    margin-bottom: 15px;
+  }
+
+  .nav-btn {
+    padding: 10px 4px;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column; /* Icono arriba, texto abajo */
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Alternancia de visibilidad de textos */
+  .nav-text-desktop {
+    display: none;
+  }
+  .nav-text-mobile {
+    display: inline-block;
+    font-weight: bold;
+  }
+
+  /* 5. Ajuste en las Pestañas de las Comidas (Scroll Horizontal) */
+  .tabs-container {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    flex: 0 0 auto; /* Evita que los botones se achiquen o deformen */
+  }
+
+  /* 6. Tabla de Compras Optimizada para no desbordar */
+  .tabla-moderna th, .tabla-moderna td {
+    padding: 10px 6px;
+    font-size: 0.8rem;
+  }
+  
+  /* Reducimos encabezados de la tabla para que entren */
+  .tabla-moderna th {
+    font-size: 0.75rem;
+  }
+}

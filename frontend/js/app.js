@@ -48,15 +48,15 @@ function cambiarPasoResultados(objetivo) {
   const btnCompras = document.getElementById('btn-nav-compras');
 
   if (objetivo === 'menu') {
-    vistaMenu.classList.remove('hidden');
-    vistaCompras.classList.add('hidden');
-    btnMenu.classList.add('active');
-    btnCompras.classList.remove('active');
+    if (vistaMenu) vistaMenu.classList.remove('hidden');
+    if (vistaCompras) vistaCompras.classList.add('hidden');
+    if (btnMenu) btnMenu.classList.add('active');
+    if (btnCompras) btnCompras.classList.remove('active');
   } else {
-    vistaMenu.classList.add('hidden');
-    vistaCompras.classList.remove('hidden');
-    btnMenu.classList.remove('active');
-    btnCompras.classList.add('active');
+    if (vistaMenu) vistaMenu.classList.add('hidden');
+    if (vistaCompras) vistaCompras.classList.remove('hidden');
+    if (btnMenu) btnMenu.classList.remove('active');
+    if (btnCompras) btnCompras.classList.add('active');
   }
 }
 
@@ -179,7 +179,7 @@ function dibujarMenuEnPantalla(datos) {
     tarjeta.innerHTML = `
       <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b;">📅 ${dia.toUpperCase()}</div>
       <div style="padding:15px;">
-        <h4 style="color:#27ae60; margin-bottom:5px;">☀️ Almuerzo / Cenie</h4>
+        <h4 style="color:#27ae60; margin-bottom:5px;">☀️ Almuerzo / Cena</h4>
         <p style="font-weight:600;">${menuDia.almuerzo.nombre}</p>
       </div>
     `;

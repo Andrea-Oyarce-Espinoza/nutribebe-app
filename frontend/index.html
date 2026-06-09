@@ -117,11 +117,17 @@
       <p id="loader-texto">Procesando requerimientos nutricionales...</p>
     </div>
 
-    <nav id="navegacion-resultados" class="nav-resultados hidden">
-      <button id="btn-nav-menu" class="nav-btn active" onclick="cambiarPasoResultados('menu')">Menú Recomendado</button>
-      <button id="btn-nav-compras" class="nav-btn" onclick="cambiarPasoResultados('compras')">Lista de Compras y Precios</button>
-      <button id="btn-nav-volver" class="nav-btn btn-volver-atras" onclick="volverAlFormulario()">Cambiar DatosPerfil</button>
-    </nav>
+<nav id="navegacion-resultados" class="nav-resultados hidden">
+        <button id="btn-nav-menu" class="nav-btn active" onclick="cambiarPasoResultados('menu')">
+          <span>📅</span> <span class="nav-text-desktop">Menú Recomendado</span><span class="nav-text-mobile">Menú</span>
+        </button>
+        <button id="btn-nav-compras" class="nav-btn" onclick="cambiarPasoResultados('compras')">
+          <span>🛒</span> <span class="nav-text-desktop">Lista y Precios</span><span class="nav-text-mobile">Compras</span>
+        </button>
+        <button id="btn-nav-volver" class="nav-btn btn-volver-atras" onclick="volverAlFormulario()">
+          <span>🔄</span> <span class="nav-text-desktop">Cambiar Perfil</span><span class="nav-text-mobile">Datos</span>
+        </button>
+      </nav>
 
     <section id="vista-paso2" class="seccion-paso hidden fade-in">
       <div class="card-resultado-moderna">
