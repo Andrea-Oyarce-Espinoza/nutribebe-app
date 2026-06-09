@@ -280,6 +280,7 @@ tarjeta.innerHTML = `
     `;
     if (subGrillas[destino]) subGrillas[destino].appendChild(filaTab);
   });
+    });
 
   // Manejo de clicks en las subpestañas
   const botonesTabs = document.querySelectorAll('.tab-btn');
