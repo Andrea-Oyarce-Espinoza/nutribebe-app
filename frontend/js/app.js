@@ -365,53 +365,74 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ==========================================================================
-   5. RENDERIZADO DEL MÓDULO DE FINANZAS Y LISTA DE COMPRAS
+   5. RENDERIZADO DEL MÓDULO DE FINANZAS Y LISTA DE COMPRAS (OPTIMIZADO)
    ========================================================================== */
 function mostrarFinanzasYCompras(finanzas) {
-  const { totalesAcumulados, listaDeCompras } = finanzas;
+  // Evitamos la desestructuración estricta en caso de que cambie la firma del JSON
+  const totalesAcumulados = finanzas.totalesAcumulados || {};
+  const listaDeCompras = finanzas.listaDeCompras || [];
   
   const contenedorModulo = document.getElementById('modulo-finanzas');
   const podioRow = document.getElementById('podio-supermercados');
   const cuerpoTabla = document.getElementById('cuerpo-tabla-compras');
 
-  if (!contenedorModulo || !podioRow || !cuerpoTabla) return;
+  // Si no existen los elementos en la maqueta actual del HTML, salimos limpiamente sin romper el script
+  if (!contenedorModulo || !podioRow || !cuerpoTabla) {
+    console.warn("Módulo de finanzas no encontrado en el DOM.");
+    return;
+  }
 
+  // 1. Limpiar los nodos internos antes de inyectar los nuevos resultados
   podioRow.innerHTML = '';
   cuerpoTabla.innerHTML = '';
 
-  const ordenados = Object.entries(totalesAcumulados).sort((a, b) => a[1] - b[1]);
-  const [superMasBarato, precioMasBarato] = ordenados[0];
+  // Validamos si el objeto de totales contiene datos válidos
+  const keysTotales = Object.keys(totalesAcumulados);
+  if (keysTotales.length > 0) {
+    // Ordenamos de menor a mayor precio para posicionar al ganador
+    const ordenados = Object.entries(totalesAcumulados).sort((a, b) => a[1] - b[1]);
+    const [superMasBarato, precioMasBarato] = ordenados[0];
 
-  ordenados.forEach(([supermercado, total]) => {
-    const esGanador = supermercado === superMasBarato;
-    
-    const cardHTML = `
-      <div style="flex: 1; min-width: 200px; margin: 10px; padding: 15px; border-radius: 8px; border: 2px solid ${esGanador ? 'var(--color-primario)' : '#e2e8f0'}; background: ${esGanador ? 'var(--color-input-bg)' : '#ffffff'}; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        ${esGanador ? '<span style="background: var(--color-primario); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px;">🏆 MÁS ECONÓMICO</span>' : ''}
-        <h5 style="margin: 5px 0; font-size: 1.1rem; color: var(--color-texto); font-weight: bold;">${supermercado}</h5>
-        <p style="font-size: 1.5rem; font-weight: bold; color: ${esGanador ? 'var(--color-primario-hover)' : 'var(--color-texto)'}; margin: 5px 0;">$${total.toLocaleString('es-CL')}</p>
-      </div>
-    `;
-    podioRow.insertAdjacentHTML('beforeend', cardHTML);
-  });
+    ordenados.forEach(([supermercado, total]) => {
+      const esGanador = supermercado === superMasBarato;
+      const totalFormateado = typeof total === 'number' ? total.toLocaleString('es-CL') : '0';
+      
+      const cardHTML = `
+        <div style="flex: 1; min-width: 200px; margin: 10px; padding: 15px; border-radius: 8px; border: 2px solid ${esGanador ? 'var(--color-primario)' : '#e2e8f0'}; background: ${esGanador ? 'var(--color-input-bg)' : '#ffffff'}; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          ${esGanador ? '<span style="background: var(--color-primario); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px;">🏆 MÁS ECONÓMICO</span>' : ''}
+          <h5 style="margin: 5px 0; font-size: 1.1rem; color: var(--color-texto); font-weight: bold;">${supermercado}</h5>
+          <p style="font-size: 1.5rem; font-weight: bold; color: ${esGanador ? 'var(--color-primario-hover)' : 'var(--color-texto)'}; margin: 5px 0;">$${totalFormateado}</p>
+        </div>
+      `;
+      podioRow.insertAdjacentHTML('beforeend', cardHTML);
+    });
+  }
 
+  // 2. Renderizar las filas de la tabla sin duplicados de ingredientes
   if (listaDeCompras.length === 0) {
     cuerpoTabla.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 20px;">¡Tienes todo en casa! No necesitas comprar nada esta semana. 🎉</td></tr>`;
   } else {
     listaDeCompras.forEach(item => {
+      // Acceso seguro: Intentamos leer preciosPorCadena o preciosPorChain, con fallback a 0 si no vienen datos
+      const contenedorPrecios = item.preciosPorCadena || item.preciosPorChain || {};
+      
+      const pLider = contenedorPrecios.Lider || contenedorPrecios.lider || 0;
+      const pJumbo = contenedorPrecios.Jumbo || contenedorPrecios.jumbo || 0;
+      const pUnimarc = contenedorPrecios.Unimarc || contenedorPrecios.unimarc || 0;
+
       const filaHTML = `
         <tr style="border-bottom: 1px solid #e2e8f0;">
-          <td style="padding: 10px; text-transform: capitalize; font-weight: bold; color: var(--color-texto);">${item.ingrediente}</td>
-          <td style="padding: 10px; text-align: center; font-weight: bold; background: #f8fafc;">${item.cantidad}</td>
-          <td style="padding: 10px; text-align: right; color: #475569;">$${item.preciosPorChain?.Lider ? item.preciosPorChain.Lider.toLocaleString('es-CL') : item.preciosPorCadena.Lider.toLocaleString('es-CL')}</td>
-          <td style="padding: 10px; text-align: right; color: #475569;">$${item.preciosPorChain?.Jumbo ? item.preciosPorChain.Jumbo.toLocaleString('es-CL') : item.preciosPorCadena.Jumbo.toLocaleString('es-CL')}</td>
-          <td style="padding: 10px; text-align: right; color: #475569;">$${item.preciosPorChain?.Unimarc ? item.preciosPorChain.Unimarc.toLocaleString('es-CL') : item.preciosPorCadena.Unimarc.toLocaleString('es-CL')}</td>
+          <td style="padding: 10px; text-transform: capitalize; font-weight: bold; color: var(--color-texto);">${item.ingrediente || item.nombre || 'Ingrediente'}</td>
+          <td style="padding: 10px; text-align: center; font-weight: bold; background: #f8fafc;">${item.cantidad || item.cantidadNecesaria || 1}</td>
+          <td style="padding: 10px; text-align: right; color: #475569;">$${pLider.toLocaleString('es-CL')}</td>
+          <td style="padding: 10px; text-align: right; color: #475569;">$${pJumbo.toLocaleString('es-CL')}</td>
+          <td style="padding: 10px; text-align: right; color: #475569;">$${pUnimarc.toLocaleString('es-CL')}</td>
         </tr>
       `;
       cuerpoTabla.insertAdjacentHTML('beforeend', filaHTML);
     });
   }
 
-  // Desplegamos de forma fluida el módulo
-  contenedorModulo.style.display = 'block';
+  // 3. Forzar el despliegue del contenedor financiero de forma independiente
+  contenedorModulo.style.setProperty('display', 'block', 'important');
 }
