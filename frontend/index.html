@@ -146,6 +146,8 @@
         </div>
 
         <!-- Estado Inicial / Placeholder -->
+         <div class="row text-center mb-4" id="podio-supermercados" style="display: flex; flex-wrap: wrap; justify-content: center;">
+
         <div id="placeholder-message" class="placeholder-text">
           Ingresa los datos de tu bebé para calcular un menú balanceado y económico.
         </div>
@@ -166,7 +168,35 @@
         <!-- Grilla Dinámica de Recetas -->
         <div id="recipes-container" class="recetas-grid"></div>
       </section>
+<div id="modulo-finanzas" class="container mt-4" style="display: none;">
+  <div class="card shadow-sm p-4 bg-white rounded">
+    
+    <h3 class="text-center mb-4">🛒 Comparativa de Supermercados</h3>
+    <div class="row text-center mb-4" id="podio-supermercados">
+      </div>
 
+    <div class="mt-4">
+      <h4 class="mb-3">📋 Lista de Compras Semanal Única</h4>
+      <p class="text-muted small">*Los ingredientes que ya tienes en casa fueron excluidos automáticamente.</p>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Ingrediente</th>
+              <th class="text-center">Cantidad</th>
+              <th class="text-end">Total Lider</th>
+              <th class="text-end">Total Jumbo</th>
+              <th class="text-end">Total Unimarc</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo-tabla-compras">
+            </tbody>
+        </table>
+      </div>
+    </div>
+</div>
+  </div>
+</div>
     </main>
   </div>
 

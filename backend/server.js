@@ -21,7 +21,6 @@ conectarDB();
 app.use('/api', require('./routes/menuRoutes'));
 
 // Inicialización del Servidor
-app.use(express.json());
 app.listen(PORT, () => {
   console.log(`🚀 Servidor e-commerce listo y protegido corriendo en el puerto ${PORT}`);
 });

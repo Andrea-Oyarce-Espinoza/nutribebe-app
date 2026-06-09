@@ -1,7 +1,6 @@
 const Receta = require('../models/Receta');
 const IngredientPrice = require('../models/IngredientPrice');
 
-
 // --- FUNCIONES AUXILIARES INTERNAS ---
 function obtenerTodosLosIngredientes(receta) {
   const lista = [];
@@ -52,10 +51,20 @@ function calcularRequerimientosNutricionales(edadMeses, pesoKg, sexoBiologico, t
 
 // --- CONTROLADORES DE RUTA ---
 
-// 1. Obtener todas las recetas con sus cálculos de precios base
+// 1. Obtener todas las recetas con sus cálculos de precios base dinámicos de la BD
 exports.obtenerRecetas = async (req, res) => {
   try {
-    const recetasDesdeAtlas = await Receta.find();
+    // Consultamos las recetas y los precios de forma paralela en MongoDB Atlas
+    const [recetasDesdeAtlas, listaPreciosBD] = await Promise.all([
+      Receta.find(),
+      IngredientPrice.find()
+    ]);
+
+    // Crear mapa rápido en memoria indexado por el nombre del ingrediente
+    const mapaPrecios = {};
+    listaPreciosBD.forEach(item => {
+      mapaPrecios[item.nombre.toLowerCase().trim()] = item.precioPromedio;
+    });
     
     const recetasConPrecio = recetasDesdeAtlas.map(receta => {
       let costoTotalReceta = 0;
@@ -63,7 +72,8 @@ exports.obtenerRecetas = async (req, res) => {
       
       todosLosIngredientes.forEach(ing => {
         if (ing && ing.nombre) {
-          costoTotalReceta += PRECIOS_MERCADO_CHILE[ing.nombre] || 500;
+          const nombreLimpio = ing.nombre.toLowerCase().trim();
+          costoTotalReceta += mapaPrecios[nombreLimpio] || 500;
         }
       });
       return {
@@ -71,9 +81,10 @@ exports.obtenerRecetas = async (req, res) => {
         presupuestoEstimadoCLP: costoTotalReceta
       };
     });
+
     res.json(recetasConPrecio);
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al obtener recetas', error });
+    res.status(500).json({ mensaje: 'Error al obtener recetas', error: error.message });
   }
 };
 
@@ -84,15 +95,15 @@ exports.crearReceta = async (req, res) => {
     await nuevaReceta.save();
     res.status(201).json({ mensaje: '¡Receta guardada con éxito en la nube!', receta: nuevaReceta });
   } catch (error) {
-    res.status(400).json({ mensaje: 'Error al guardar en Atlas', error });
+    res.status(400).json({ mensaje: 'Error al guardar en Atlas', error: error.message });
   }
 };
 
-// 3. Generar menú personalizado inteligente semanal
+// 3. Generar menú personalizado inteligente semanal con Lista de Compras por Supermercado
 exports.generarMenuPersonalizado = async (req, res) => {
   try {
     const { edadMeses, sexoBiologico, pesoKg, tallaCm, alergias, presupuestoMaximoCLP, mercaderiaEnCasa, formatoAlimentacion } = req.body;
-    const despensaUsuario = mercaderiaEnCasa || [];
+    const despensaUsuario = (mercaderiaEnCasa || []).map(i => i.toLowerCase().trim());
 
     const perfilNutricional = calcularRequerimientosNutricionales(edadMeses, pesoKg, sexoBiologico, tallaCm);
     
@@ -114,9 +125,8 @@ exports.generarMenuPersonalizado = async (req, res) => {
         if (ing && ing.nombre) {
           const nombreIngrediente = ing.nombre.toLowerCase().trim();
 
-          // Si el usuario NO lo tiene en su despensa, calculamos el costo
-          if (!despensaUsuario.includes(ing.nombre)) {
-            // Buscamos en el mapa de la BD; si no existe el ingrediente, usamos 500 como salvavidas
+          // Si el usuario NO lo tiene en su despensa, calculamos el costo base referencial
+          if (!despensaUsuario.includes(nombreIngrediente)) {
             costo += mapaPrecios[nombreIngrediente] || 500;
           }
         }      
@@ -140,7 +150,7 @@ exports.generarMenuPersonalizado = async (req, res) => {
           return false;
         }
       }
-      return true; // <-- Permitir que la receta pase si cumple los filtros
+      return true;
     });
 
     const principales = recetasAptas.filter(r => r.categoria === 'principal');
@@ -157,6 +167,9 @@ exports.generarMenuPersonalizado = async (req, res) => {
     const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
     const calendarioMenu = {};
     let gastoTotalSemana = 0;
+
+    // Estructura temporal para acumular ingredientes de la lista de compras semanal
+    const consolidadoListaCompras = {};
 
     diasSemana.forEach((dia, index) => {
       const almuerzoCena = principales[index % principales.length] || principales[0];
@@ -180,6 +193,58 @@ exports.generarMenuPersonalizado = async (req, res) => {
         postre: postreDia,
         costoDiarioCalculado: costoDiario
       };
+
+      // --- ACUMULACIÓN DE INGREDIENTES PARA LA LISTA DE COMPRAS ---
+      const comidasDelDia = [desayunoDia, almuerzoCena, almuerzoCena, colacionDia, postreDia];
+      comidasDelDia.forEach(receta => {
+        if (!receta) return;
+        const ings = obtenerTodosLosIngredientes(receta);
+        ings.forEach(ing => {
+          if (ing && ing.nombre) {
+            const nombreLimpio = ing.nombre.toLowerCase().trim();
+            // Evitar agregar si el usuario ya cuenta con stock en despensa
+            if (despensaUsuario.includes(nombreLimpio)) return;
+
+            if (!consolidadoListaCompras[nombreLimpio]) {
+              consolidadoListaCompras[nombreLimpio] = {
+                nombre: ing.nombre,
+                cantidadNecesaria: 0
+              };
+            }
+            consolidadoListaCompras[nombreLimpio].cantidadNecesaria += 1;
+          }
+        });
+      });
+    });
+
+    // --- CRUCE CON CADENAS DE SUPERMERCADOS ---
+    const totalesPorCadena = { Lider: 0, Jumbo: 0, Unimarc: 0 };
+    const desgloseFinalProductos = [];
+
+    Object.keys(consolidadoListaCompras).forEach(keyNombre => {
+      const producto = consolidadoListaCompras[keyNombre];
+      const buscarEnBD = listaPreciosBD.find(p => p.nombre.toLowerCase().trim() === keyNombre);
+      
+      const costosPorSúper = {};
+      
+      ['Lider', 'Jumbo', 'Unimarc'].forEach(cadena => {
+        let precioUnitario = 500; // Respaldo global
+        
+        if (buscarEnBD) {
+          const cadenaEspecifica = buscarEnBD.preciosPorCadena.find(c => c.supermercado === cadena);
+          precioUnitario = cadenaEspecifica ? cadenaEspecifica.precio : buscarEnBD.precioPromedio;
+        }
+
+        const costoTotalProducto = precioUnitario * producto.cantidadNecesaria;
+        costosPorSúper[cadena] = costoTotalProducto;
+        totalesPorCadena[cadena] += costoTotalProducto;
+      });
+
+      desgloseFinalProductos.push({
+        ingrediente: producto.nombre,
+        cantidad: producto.cantidadNecesaria,
+        preciosPorCadena: costosPorSúper
+      });
     });
 
     const presupuestoSemanalUsuario = presupuestoMaximoCLP * 7;
@@ -190,7 +255,11 @@ exports.generarMenuPersonalizado = async (req, res) => {
       infoNutricionalBebe: perfilNutricional,
       gastoSemanalCalculado: gastoTotalSemana,
       dineroAhorradoSemanal: dineroAhorradoSemana,
-      menuSemanal: calendarioMenu
+      menuSemanal: calendarioMenu,
+      finanzasSupermercados: {
+        totalesAcumulados: totalesPorCadena, // { Lider: 12500, Jumbo: 15300, Unimarc: 13100 }
+        listaDeCompras: desgloseFinalProductos // Array detallado por producto para mapear la tabla
+      }
     });
 
   } catch (error) {

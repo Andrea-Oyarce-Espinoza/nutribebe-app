@@ -11,7 +11,7 @@ const mensajePlaceholder = document.getElementById('placeholder-message');
 const txtConversionEdad = document.getElementById('age-conversion');
 const inputEdad = document.getElementById('age');
 
-// Modificado para evitar capturar el .value antes de que cargue el DOM
+// Evita capturar el .value antes de que cargue el DOM
 const getFormatoAlimentacion = () => {
   const elemento = document.getElementById('format') || document.getElementById('formato') || document.getElementById('formatoAlimentacion');
   return elemento ? elemento.value : 'Mixto';
@@ -51,18 +51,14 @@ if (inputEdad && txtConversionEdad) {
    1C. LÓGICA DE PERSISTENCIA (GUARDAR Y CARGAR LOCALSTORAGE)
    ========================================================================== */
 function guardarDatosFormulario() {
-  // Captura flexible adaptada a múltiples variantes de IDs comunes
-  const inputE = document.getElementById('age') || document.getElementById('edad') || document.getElementById('edadMeses');
-  const selectS = document.getElementById('gender') || document.getElementById('sexo') || document.getElementById('sexoBiologico');
-  const selectF = document.getElementById('format') || document.getElementById('formato') || document.getElementById('formatoAlimentacion');
-  const inputP = document.getElementById('weight') || document.getElementById('peso') || document.getElementById('pesoKg');
-  const inputT = document.getElementById('height') || document.getElementById('talla') || document.getElementById('tallaCm');
-  const inputB = document.getElementById('budget') || document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
+  const inputE = document.getElementById('age');
+  const selectS = document.getElementById('gender');
+  const selectF = document.getElementById('format');
+  const inputP = document.getElementById('weight');
+  const inputT = document.getElementById('height');
+  const inputB = document.getElementById('budget');
 
-  if (!inputE || !selectS || !selectF) {
-    console.warn("Advertencia: No se encontraron los campos principales del formulario para guardar.");
-    return;
-  }
+  if (!inputE || !selectS || !selectF) return;
 
   const datos = {
     edadMeses: inputE.value,
@@ -82,12 +78,12 @@ function cargarDatosDesdeStorage() {
   if (datosGuardados) {
     const datos = JSON.parse(datosGuardados);
     
-    const inputE = document.getElementById('age') || document.getElementById('edad') || document.getElementById('edadMeses');
-    const selectS = document.getElementById('gender') || document.getElementById('sexo') || document.getElementById('sexoBiologico');
-    const selectF = document.getElementById('format') || document.getElementById('formato') || document.getElementById('formatoAlimentacion');
-    const inputP = document.getElementById('weight') || document.getElementById('peso') || document.getElementById('pesoKg');
-    const inputT = document.getElementById('height') || document.getElementById('talla') || document.getElementById('tallaCm');
-    const inputB = document.getElementById('budget') || document.getElementById('presupuesto') || document.getElementById('presupuestoMaximoCLP');
+    const inputE = document.getElementById('age');
+    const selectS = document.getElementById('gender');
+    const selectF = document.getElementById('format');
+    const inputP = document.getElementById('weight');
+    const inputT = document.getElementById('height');
+    const inputB = document.getElementById('budget');
 
     if(inputE && datos.edadMeses) { inputE.value = datos.edadMeses; calcularConversionEdad(parseInt(datos.edadMeses)); }
     if(selectS && datos.sexoBiologico) selectS.value = datos.sexoBiologico;
@@ -96,7 +92,7 @@ function cargarDatosDesdeStorage() {
     if(inputT && datos.tallaCm) inputT.value = datos.tallaCm;
     if(inputB && datos.presupuestoMaximoCLP) inputB.value = datos.presupuestoMaximoCLP;
     
-    console.log("Datos recuperados del localStorage exitosamente.");
+    console.log("Datos recuperados del localStorage exitosamente. 🔄");
   }
 }
 
@@ -107,7 +103,6 @@ if (formulario) {
   formulario.addEventListener('submit', async (e) => {
     e.preventDefault(); 
 
-    // Re-capturamos los IDs del bloque superior sincronizados
     const edadMeses = parseInt(document.getElementById('age').value);
     const sexoBiologico = document.getElementById('gender').value;
     const pesoKg = parseFloat(document.getElementById('weight').value);
@@ -124,12 +119,16 @@ if (formulario) {
       pesoKg,
       tallaCm,
       alergias,
-      presupuestoMaximoCLP
+      presupuestoMaximoCLP,
+      formatoAlimentacion: getFormatoAlimentacion()
     };
 
     try {
       if (mensajePlaceholder) mensajePlaceholder.classList.add('hidden');
       if (cajaFinanzas) cajaFinanzas.classList.add('hidden');
+      
+      const contenedorModulo = document.getElementById('modulo-finanzas');
+      if (contenedorModulo) contenedorModulo.style.display = 'none';
 
       contenedorRecetas.innerHTML = '<p class="placeholder-text">Calculando requerimientos calóricos y estructurando tu menú semanal... 🍳</p>';
 
@@ -140,7 +139,6 @@ if (formulario) {
         },
         body: JSON.stringify({
           ...datosBebe,
-          formatoAlimentacion: getFormatoAlimentacion(), // Extraído dinámicamente mediante la función segura
           mercaderiaEnCasa
         })
       });
@@ -148,8 +146,13 @@ if (formulario) {
       const resultado = await respuesta.json();
 
       if (respuesta.ok) {
-        guardarDatosFormulario(); // Corregido para usar el nombre de función unificado
+        guardarDatosFormulario(); 
         dibujarMenuEnPantalla(resultado); 
+        
+        // 🔥 CORREGIDO: Cambiado de 'data' a 'resultado' para leer el objeto financiero dinámico
+        if (resultado.finanzasSupermercados) {
+          mostrarFinanzasYCompras(resultado.finanzasSupermercados);
+        }
       } else {
         contenedorRecetas.innerHTML = `<p class="placeholder-text" style="color: var(--color-precio);">Error: ${resultado.mensaje}</p>`;
       }
@@ -162,7 +165,7 @@ if (formulario) {
         <span style="font-size: 0.85rem; font-weight: normal; color: var(--color-texto);">Revisa que tu servidor de Render esté encendido.</span>
         </p>`;
     }
-  });
+  }); // <-- CORREGIDO: Cierre correcto del event listener del formulario
 }
 
 /* ==========================================================================
@@ -184,6 +187,18 @@ function dibujarMenuEnPantalla(datos) {
 
   if (contenedorTabs) contenedorTabs.classList.remove('hidden');
   if (cajaFinanzas) cajaFinanzas.classList.remove('hidden');
+
+  const primerDia = Object.values(datos.menuSemanal)[0] || {};
+  const advertencias = [];
+  if (!primerDia.desayuno)     advertencias.push('desayunos');
+  if (!primerDia.colacionTarde) advertencias.push('colaciones');
+  if (!primerDia.postre)       advertencias.push('postres');
+  if (advertencias.length > 0) {
+    const avisoEl = document.createElement('p');
+    avisoEl.style.cssText = 'font-size:0.82rem; color:var(--color-secundario); margin-bottom:10px; text-align:center;';
+    avisoEl.textContent = `⚠️ Sin recetas en la BD para: ${advertencias.join(', ')}. Se muestra texto de respaldo.`;
+    contenedorRecetas.appendChild(avisoEl);
+  }
 
   if (datos.infoNutricionalBebe) {
     const infoNutri = datos.infoNutricionalBebe;
@@ -224,7 +239,14 @@ function dibujarMenuEnPantalla(datos) {
     subGrillas[cat] = grid;
   });
 
-  const rutaImagen = `https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=400&h=220&q=80`;
+  const IMAGENES_POR_CATEGORIA = {
+    principal:  'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=400&h=220&q=80',
+    desayuno:   'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=400&h=220&q=80',
+    colacion:   'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?auto=format&fit=crop&w=400&h=220&q=80',
+    postre:     'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=400&h=220&q=80',
+    default:    'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=400&h=220&q=80'
+  };
+  const getImagen = (categoria) => IMAGENES_POR_CATEGORIA[categoria] || IMAGENES_POR_CATEGORIA.default;
 
   Object.keys(datos.menuSemanal).forEach(dia => {
     const menuDia = datos.menuSemanal[dia];
@@ -235,7 +257,7 @@ function dibujarMenuEnPantalla(datos) {
     tarjetaPrincipal.innerHTML = `
       <div class="receta-image-container" style="height: 120px;">
         <div class="alerta-card-banner" style="background-color: var(--color-primario); opacity: 0.9;">🍳 ${dia.toUpperCase()}</div>
-        <img src="${rutaImagen}" alt="${menuDia.almuerzo.nombre}" class="receta-img">
+        <img src="${getImagen('principal')}" alt="${menuDia.almuerzo.nombre}" class="receta-img">
       </div>
       <div class="receta-body" style="padding: 15px;">
         <h3 style="color: var(--color-primario-hover); margin-bottom: 8px;">☀️ Almuerzo y 🌙 Cena</h3>
@@ -252,7 +274,7 @@ function dibujarMenuEnPantalla(datos) {
     tarjetaDesayuno.innerHTML = `
       <div class="receta-image-container" style="height: 120px;">
         <div class="alerta-card-banner" style="background-color: #e67e22; opacity: 0.9;">🥞 ${dia.toUpperCase()}</div>
-        <img src="${rutaImagen}" alt="Desayuno" class="receta-img">
+        <img src="${getImagen('desayuno')}" alt="Desayuno" class="receta-img">
       </div>
       <div class="receta-body" style="padding: 15px;">
         <h3 style="color: #e67e22; margin-bottom: 8px;">🌅 Desayuno Completo</h3>
@@ -269,7 +291,7 @@ function dibujarMenuEnPantalla(datos) {
     tarjetaColacion.innerHTML = `
       <div class="receta-image-container" style="height: 120px;">
         <div class="alerta-card-banner" style="background-color: #2ecc71; opacity: 0.9;">🍎 ${dia.toUpperCase()}</div>
-        <img src="${rutaImagen}" alt="Colación" class="receta-img">
+        <img src="${getImagen('colacion')}" alt="Colación" class="receta-img">
       </div>
       <div class="receta-body" style="padding: 15px;">
         <h3 style="color: #2ecc71; margin-bottom: 8px;">⏱️ Colaciones del Día</h3>
@@ -286,7 +308,7 @@ function dibujarMenuEnPantalla(datos) {
     tarjetaPostre.innerHTML = `
       <div class="receta-image-container" style="height: 120px;">
         <div class="alerta-card-banner" style="background-color: #9b59b6; opacity: 0.9;">🍓 ${dia.toUpperCase()}</div>
-        <img src="${rutaImagen}" alt="Postre" class="receta-img">
+        <img src="${getImagen('postre')}" alt="Postre" class="receta-img">
       </div>
       <div class="receta-body" style="padding: 15px;">
         <h3 style="color: #9b59b6; margin-bottom: 8px;">🍧 Postre de Cierre</h3>
@@ -327,6 +349,9 @@ if (btnLimpiar) {
       mensajePlaceholder.classList.remove('hidden');
     }
     if (cajaFinanzas) cajaFinanzas.classList.add('hidden');
+    
+    const contenedorModulo = document.getElementById('modulo-finanzas');
+    if (contenedorModulo) contenedorModulo.style.display = 'none';
   });
 }
 
@@ -334,8 +359,59 @@ if (btnLimpiar) {
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatosDesdeStorage();
 
-  // Registrar listeners dinámicos para los cambios en inputs
   document.querySelectorAll('input, select').forEach(elemento => {
     elemento.addEventListener('change', guardarDatosFormulario);
   });
 });
+
+/* ==========================================================================
+   5. RENDERIZADO DEL MÓDULO DE FINANZAS Y LISTA DE COMPRAS
+   ========================================================================== */
+function mostrarFinanzasYCompras(finanzas) {
+  const { totalesAcumulados, listaDeCompras } = finanzas;
+  
+  const contenedorModulo = document.getElementById('modulo-finanzas');
+  const podioRow = document.getElementById('podio-supermercados');
+  const cuerpoTabla = document.getElementById('cuerpo-tabla-compras');
+
+  if (!contenedorModulo || !podioRow || !cuerpoTabla) return;
+
+  podioRow.innerHTML = '';
+  cuerpoTabla.innerHTML = '';
+
+  const ordenados = Object.entries(totalesAcumulados).sort((a, b) => a[1] - b[1]);
+  const [superMasBarato, precioMasBarato] = ordenados[0];
+
+  ordenados.forEach(([supermercado, total]) => {
+    const esGanador = supermercado === superMasBarato;
+    
+    const cardHTML = `
+      <div style="flex: 1; min-width: 200px; margin: 10px; padding: 15px; border-radius: 8px; border: 2px solid ${esGanador ? 'var(--color-primario)' : '#e2e8f0'}; background: ${esGanador ? 'var(--color-input-bg)' : '#ffffff'}; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        ${esGanador ? '<span style="background: var(--color-primario); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px;">🏆 MÁS ECONÓMICO</span>' : ''}
+        <h5 style="margin: 5px 0; font-size: 1.1rem; color: var(--color-texto); font-weight: bold;">${supermercado}</h5>
+        <p style="font-size: 1.5rem; font-weight: bold; color: ${esGanador ? 'var(--color-primario-hover)' : 'var(--color-texto)'}; margin: 5px 0;">$${total.toLocaleString('es-CL')}</p>
+      </div>
+    `;
+    podioRow.insertAdjacentHTML('beforeend', cardHTML);
+  });
+
+  if (listaDeCompras.length === 0) {
+    cuerpoTabla.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 20px;">¡Tienes todo en casa! No necesitas comprar nada esta semana. 🎉</td></tr>`;
+  } else {
+    listaDeCompras.forEach(item => {
+      const filaHTML = `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 10px; text-transform: capitalize; font-weight: bold; color: var(--color-texto);">${item.ingrediente}</td>
+          <td style="padding: 10px; text-align: center; font-weight: bold; background: #f8fafc;">${item.cantidad}</td>
+          <td style="padding: 10px; text-align: right; color: #475569;">$${item.preciosPorChain?.Lider ? item.preciosPorChain.Lider.toLocaleString('es-CL') : item.preciosPorCadena.Lider.toLocaleString('es-CL')}</td>
+          <td style="padding: 10px; text-align: right; color: #475569;">$${item.preciosPorChain?.Jumbo ? item.preciosPorChain.Jumbo.toLocaleString('es-CL') : item.preciosPorCadena.Jumbo.toLocaleString('es-CL')}</td>
+          <td style="padding: 10px; text-align: right; color: #475569;">$${item.preciosPorChain?.Unimarc ? item.preciosPorChain.Unimarc.toLocaleString('es-CL') : item.preciosPorCadena.Unimarc.toLocaleString('es-CL')}</td>
+        </tr>
+      `;
+      cuerpoTabla.insertAdjacentHTML('beforeend', filaHTML);
+    });
+  }
+
+  // Desplegamos de forma fluida el módulo
+  contenedorModulo.style.display = 'block';
+}
