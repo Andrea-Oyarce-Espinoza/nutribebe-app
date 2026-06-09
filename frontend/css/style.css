@@ -264,7 +264,7 @@ input[type="number"]:focus, select:focus {
 }
 
 /* ==========================================================================
-   6. PESTAÑAS INTERNAS Y PARRILLA DE TARJETAS (RESOLUCIÓN ESCRITORIO AMPLIO)
+   6. PESTAÑAS INTERNAS Y PARRILLA DE TARJETAS (CENTRADAS Y AMPLIAS)
    ========================================================================== */
 .tabs-container {
   display: flex;
@@ -291,36 +291,44 @@ input[type="number"]:focus, select:focus {
   border-color: var(--color-secundario);
 }
 
-/* 🎯 CORRECCIÓN CLAVE: Sincronizado con index.html y expandido para Escritorio */
+/* Grilla Centrada y auto-ajustable */
 .recetas-grid-moderna {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Hace que las tarjetas se estiren y ocupen todo el ancho */
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 340px)); /* Limita el tamaño de cada tarjeta entre 300px y 340px */
+  gap: 25px;
   width: 100%;
+  justify-content: center; /* 🎯 ESTO CENTRA TODO EL GRUPO EN ESCRITORIO */
 }
 
+/* Modificamos las vistas dinámicas para que hereden el Grid y se centren */
 .tab-content-view {
-  display: grid !important; /* Cambiado de flex-column a grid para soportar comportamiento horizontal */
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
-  gap: 20px !important;
+  display: grid !important; 
+  grid-template-columns: repeat(auto-fit, minmax(300px, 340px)) !important;
+  gap: 25px !important;
   width: 100%;
+  justify-content: center !important; /* 🎯 Fuerza el centrado horizontal de las tarjetas */
 }
 
 .tab-content-view.hidden {
   display: none !important;
 }
 
-/* --- TARJETAS DE RECETA REINVENTADAS --- */
+/* Tarjetas de Recetas robustas */
 .receta-card {
   background: var(--color-tarjeta);
   border: 1px solid var(--color-borde);
-  border-top: 4px solid var(--color-secundario);
+  border-top: 5px solid var(--color-secundario);
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(93, 90, 81, 0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  width: 100%; /* Garantiza que use todo el espacio asignado por la grilla */
+  width: 100%;
+  transition: transform 0.2s;
+}
+
+.receta-card:hover {
+  transform: translateY(-2px);
 }
 
 /* --- PANEL INFORME NUTRICIONAL PEDIÁTRICO --- */

@@ -1,45 +1,144 @@
 /* ==========================================================================
-   1. CAPTURA DE ELEMENTOS GLOBALES
+   1. CONTROL PRINCIPAL Y SELECCIÓN AL CARGAR EL DOM
    ========================================================================== */
-const formulario = document.getElementById('filter-form');
-const contenedorRecetas = document.getElementById('recipes-container');
-const txtGasto = document.getElementById('total-cost');
-const txtAhorro = document.getElementById('total-savings');
-const btnLimpiar = document.getElementById('btn-clear');
-const txtConversionEdad = document.getElementById('age-conversion');
-const inputEdad = document.getElementById('age');
+document.addEventListener('DOMContentLoaded', () => {
+  // Captura segura de todos los elementos una vez que el HTML está 100% renderizado
+  const formulario = document.getElementById('filter-form');
+  const contenedorRecetas = document.getElementById('recipes-container');
+  const txtGasto = document.getElementById('total-cost');
+  const txtAhorro = document.getElementById('total-savings');
+  const btnLimpiar = document.getElementById('btn-clear');
+  const txtConversionEdad = document.getElementById('age-conversion');
+  const inputEdad = document.getElementById('age');
 
-const getFormatoAlimentacion = () => {
-  const elemento = document.getElementById('format');
-  return elemento ? elemento.value : 'Mixto';
-};
+  const getFormatoAlimentacion = () => {
+    const elemento = document.getElementById('format');
+    return elemento ? elemento.value : 'Mixto';
+  };
+
+  /* ==========================================================================
+     1B. CONVERTIDOR DE EDAD EN TIEMPO REAL 
+     ========================================================================== */
+  function calcularConversionEdad(mesesTotales) {
+    if (isNaN(mesesTotales) || mesesTotales < 6) {
+      if (txtConversionEdad) txtConversionEdad.textContent = '';
+      return;
+    }
+    const anos = Math.floor(mesesTotales / 12);
+    const mesesRestantes = mesesTotales % 12;
+
+    if (mesesTotales < 12) {
+      txtConversionEdad.textContent = `👶 Etapa de lactancia: ${mesesTotales} meses`;
+    } else {
+      let mensaje = `✨ Equivale a ${anos} ${anos === 1 ? 'año' : 'años'}`;
+      if (mesesRestantes > 0) mensaje += ` y ${mesesRestantes} ${mesesRestantes === 1 ? 'mes' : 'meses'}`;
+      txtConversionEdad.textContent = mensaje;
+    }
+  }
+
+  if (inputEdad) {
+    inputEdad.addEventListener('input', (e) => calcularConversionEdad(parseInt(e.target.value)));
+  }
+
+  /* ==========================================================================
+     2. MANEJADORES PARA LA BARRA DE NAVEGACIÓN SUPERIOR
+     ========================================================================== */
+  const btnNavMenu = document.getElementById('btn-nav-menu');
+  const btnNavCompras = document.getElementById('btn-nav-compras');
+  const btnNavVolver = document.getElementById('btn-nav-volver');
+
+  if (btnNavMenu && btnNavCompras && btnNavVolver) {
+    btnNavMenu.addEventListener('click', () => cambiarPasoResultados('menu'));
+    btnNavCompras.addEventListener('click', () => cambiarPasoResultados('compras'));
+    btnNavVolver.addEventListener('click', () => volverAlFormulario());
+  }
+
+  /* ==========================================================================
+     3. ENVÍO DEL FORMULARIO Y PETICIÓN AL BACKEND
+     ========================================================================== */
+  if (formulario) {
+    formulario.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const loader = document.getElementById('loader-pantalla');
+      const vistaForm = document.getElementById('vista-paso1');
+
+      const edadMeses = parseInt(document.getElementById('age').value);
+      const sexoBiologico = document.getElementById('gender').value;
+      const pesoKg = parseFloat(document.getElementById('weight').value);
+      const tallaCm = parseFloat(document.getElementById('height').value);
+      const presupuestoMaximoCLP = parseInt(document.getElementById('budget').value);
+      const alergias = Array.from(document.querySelectorAll('input[name="allergens"]:checked')).map(cb => cb.value);
+      const mercaderiaEnCasa = Array.from(document.querySelectorAll('input[name="despensa"]:checked')).map(el => el.value);
+
+      const datosBebe = { edadMeses, sexoBiologico, pesoKg, tallaCm, alergias, presupuestoMaximoCLP, formatoAlimentacion: getFormatoAlimentacion() };
+
+      try {
+        vistaForm.classList.add('hidden');
+        if (loader) loader.classList.remove('hidden');
+
+        const respuesta = await fetch('https://menu-bebe-api.onrender.com/api/menu-personalizado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...datosBebe, mercaderiaEnCasa })
+        });
+
+        const resultado = await respuesta.json();
+        if (loader) loader.classList.add('hidden');
+
+        if (respuesta.ok) {
+          localStorage.setItem('nutribebe_datos', JSON.stringify(datosBebe));
+          
+          dibujarMenuEnPantalla(resultado, contenedorRecetas, txtGasto, txtAhorro);
+          
+          if (resultado.finanzasSupermercados) {
+            mostrarFinanzasYCompras(resultado.finanzasSupermercados);
+          }
+
+          document.getElementById('navegacion-resultados').classList.remove('hidden');
+          cambiarPasoResultados('menu');
+        } else {
+          alert(`Error en el cálculo: ${resultado.mensaje}`);
+          vistaForm.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error(err);
+        if (loader) loader.classList.add('hidden');
+        alert("⚠️ Error crítico de conexión con el backend en Render.");
+        vistaForm.classList.remove('hidden');
+      }
+    });
+  }
+
+  /* ==========================================================================
+     4. PERSISTENCIA Y RESTAURACIÓN DE DATOS GUARDADOS
+     ========================================================================== */
+  const datosGuardados = localStorage.getItem('nutribebe_datos');
+  if (datosGuardados) {
+    const datos = JSON.parse(datosGuardados);
+    if (document.getElementById('age') && datos.edadMeses) {
+      document.getElementById('age').value = datos.edadMeses;
+      calcularConversionEdad(parseInt(datos.edadMeses));
+    }
+    if (document.getElementById('gender') && datos.sexoBiologico) document.getElementById('gender').value = datos.sexoBiologico;
+    if (document.getElementById('format') && datos.formatoAlimentacion) document.getElementById('format').value = datos.formatoAlimentacion;
+    if (document.getElementById('weight') && datos.pesoKg) document.getElementById('weight').value = datos.pesoKg;
+    if (document.getElementById('height') && datos.tallaCm) document.getElementById('height').value = datos.tallaCm;
+    if (document.getElementById('budget') && datos.presupuestoMaximoCLP) document.getElementById('budget').value = datos.presupuestoMaximoCLP;
+  }
+
+  if (btnLimpiar) {
+    btnLimpiar.addEventListener('click', () => {
+      formulario.reset();
+      localStorage.removeItem('nutribebe_datos');
+      if (txtConversionEdad) txtConversionEdad.textContent = '';
+      volverAlFormulario();
+    });
+  }
+});
 
 /* ==========================================================================
-   1B. CONVERTIDOR DE EDAD EN TIEMPO REAL 
-   ========================================================================== */
-function calcularConversionEdad(mesesTotales) {
-  if (isNaN(mesesTotales) || mesesTotales < 6) {
-    if (txtConversionEdad) txtConversionEdad.textContent = '';
-    return;
-  }
-  const anos = Math.floor(mesesTotales / 12);
-  const mesesRestantes = mesesTotales % 12;
-
-  if (mesesTotales < 12) {
-    txtConversionEdad.textContent = `👶 Etapa de lactancia: ${mesesTotales} meses`;
-  } else {
-    let mensaje = `✨ Equivale a ${anos} ${anos === 1 ? 'año' : 'años'}`;
-    if (mesesRestantes > 0) mensaje += ` y ${mesesRestantes} ${mesesRestantes === 1 ? 'mes' : 'meses'}`;
-    txtConversionEdad.textContent = mensaje;
-  }
-}
-
-if (inputEdad) {
-  inputEdad.addEventListener('input', (e) => calcularConversionEdad(parseInt(e.target.value)));
-}
-
-/* ==========================================================================
-   2. CONTROL DE NAVEGACIÓN ENTRE VISTAS (PASO A PASO NUEVO)
+   5. FUNCIONES AUXILIARES DE NAVEGACIÓN (ACCESIBLES GLOBALMENTE)
    ========================================================================== */
 function cambiarPasoResultados(objetivo) {
   const vistaMenu = document.getElementById('vista-paso2');
@@ -61,86 +160,22 @@ function cambiarPasoResultados(objetivo) {
 }
 
 function volverAlFormulario() {
-  document.getElementById('vista-paso1').classList.remove('hidden');
-  document.getElementById('navegacion-resultados').classList.add('hidden');
-  document.getElementById('vista-paso2').classList.add('hidden');
-  document.getElementById('vista-paso3').classList.add('hidden');
-}
+  const v1 = document.getElementById('vista-paso1');
+  const nav = document.getElementById('navegacion-resultados');
+  const v2 = document.getElementById('vista-paso2');
+  const v3 = document.getElementById('vista-paso3');
 
-// Vinculación de manejadores de eventos modernos para la navegación superior
-document.addEventListener('DOMContentLoaded', () => {
-  const btnNavMenu = document.getElementById('btn-nav-menu');
-  const btnNavCompras = document.getElementById('btn-nav-compras');
-  const btnNavVolver = document.getElementById('btn-nav-volver');
-
-  if (btnNavMenu && btnNavCompras && btnNavVolver) {
-    btnNavMenu.addEventListener('click', () => cambiarPasoResultados('menu'));
-    btnNavCompras.addEventListener('click', () => cambiarPasoResultados('compras'));
-    btnNavVolver.addEventListener('click', () => volverAlFormulario());
-  }
-});
-
-/* ==========================================================================
-   3. ENVÍO DEL FORMULARIO Y PETICIÓN AL BACKEND
-   ========================================================================== */
-if (formulario) {
-  formulario.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const loader = document.getElementById('loader-pantalla');
-    const vistaForm = document.getElementById('vista-paso1');
-
-    const edadMeses = parseInt(document.getElementById('age').value);
-    const sexoBiologico = document.getElementById('gender').value;
-    const pesoKg = parseFloat(document.getElementById('weight').value);
-    const tallaCm = parseFloat(document.getElementById('height').value);
-    const presupuestoMaximoCLP = parseInt(document.getElementById('budget').value);
-    const alergias = Array.from(document.querySelectorAll('input[name="allergens"]:checked')).map(cb => cb.value);
-    const mercaderiaEnCasa = Array.from(document.querySelectorAll('input[name="despensa"]:checked')).map(el => el.value);
-
-    const datosBebe = { edadMeses, sexoBiologico, pesoKg, tallaCm, alergias, presupuestoMaximoCLP, formatoAlimentacion: getFormatoAlimentacion() };
-
-    try {
-      vistaForm.classList.add('hidden');
-      loader.classList.remove('hidden');
-
-      const respuesta = await fetch('https://menu-bebe-api.onrender.com/api/menu-personalizado', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...datosBebe, mercaderiaEnCasa })
-      });
-
-      const resultado = await respuesta.json();
-      loader.classList.add('hidden');
-
-      if (respuesta.ok) {
-        localStorage.setItem('nutribebe_datos', JSON.stringify(datosBebe));
-        
-        dibujarMenuEnPantalla(resultado);
-        
-        if (resultado.finanzasSupermercados) {
-          mostrarFinanzasYCompras(resultado.finanzasSupermercados);
-        }
-
-        document.getElementById('navegacion-resultados').classList.remove('hidden');
-        cambiarPasoResultados('menu');
-      } else {
-        alert(`Error en el cálculo: ${resultado.mensaje}`);
-        vistaForm.classList.remove('hidden');
-      }
-    } catch (err) {
-      console.error(err);
-      loader.classList.add('hidden');
-      alert("⚠️ Error crítico de conexión con el backend en Render.");
-      vistaForm.classList.remove('hidden');
-    }
-  });
+  if (v1) v1.classList.remove('hidden');
+  if (nav) nav.classList.add('hidden');
+  if (v2) v2.classList.add('hidden');
+  if (v3) v3.classList.add('hidden');
 }
 
 /* ==========================================================================
-   4. FUNCIÓN RENDERIZAR MENÚ RECOMENDADO
+   6. RENDERIZADO DINÁMICO DE COMPONENTES
    ========================================================================== */
-function dibujarMenuEnPantalla(datos) {
+function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
+  if (!contenedorRecetas) return;
   contenedorRecetas.innerHTML = '';
   
   const informeViejo = document.getElementById('informe-nutricional-dinamico');
@@ -158,7 +193,8 @@ function dibujarMenuEnPantalla(datos) {
       <p>Estado del bebé: <strong>${infoNutri.evaluacionBiometrica.estadoNutricional}</strong> (IMC: ${infoNutri.evaluacionBiometrica.imcCalculado})</p>
       <p style="margin-top:5px; font-size:0.9rem;">🎯 Meta: ${infoNutri.caloriasMeta} kcal/día | 💧 Líquidos: ${infoNutri.liquidosMeta} mL/día</p>
     `;
-    document.getElementById('vista-paso2').prepend(infoBox);
+    const v2 = document.getElementById('vista-paso2');
+    if (v2) v2.prepend(infoBox);
   }
 
   if (txtGasto) txtGasto.textContent = `$${(datos.gastoSemanalCalculado || 0).toLocaleString('es-CL')}`;
@@ -169,7 +205,6 @@ function dibujarMenuEnPantalla(datos) {
 
   categoriasTipos.forEach(cat => {
     const grid = document.createElement('div');
-    // Mantenemos la consistencia estructural usando la grilla corregida
     grid.className = `tab-content-view ${cat === 'principales' ? '' : 'hidden'}`;
     grid.id = `grid-view-${cat}`;
     contenedorRecetas.appendChild(grid);
@@ -179,49 +214,52 @@ function dibujarMenuEnPantalla(datos) {
   Object.keys(datos.menuSemanal).forEach(dia => {
     const menuDia = datos.menuSemanal[dia];
 
-    // Card de almuerzos y cenas
+    // Almuerzo y cena
     const tarjeta = document.createElement('div');
     tarjeta.className = 'receta-card';
     tarjeta.innerHTML = `
-      <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b;">📅 ${dia.toUpperCase()}</div>
-      <div style="padding:15px;">
-        <h4 style="color:#27ae60; margin-bottom:5px;">☀️ Almuerzo / Cena</h4>
-        <p style="font-weight:600;">${menuDia.almuerzo.nombre}</p>
+      <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
+      <div style="padding:20px; text-align:center;">
+        <h4 style="color:#27ae60; margin-bottom:8px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">☀️ Almuerzo / Cena</h4>
+        <p style="font-weight:600; color:#334155; font-size:1.05rem;">${menuDia.almuerzo.nombre}</p>
       </div>
     `;
-    subGrillas['principales'].appendChild(tarjeta);
+    if (subGrillas['principales']) subGrillas['principales'].appendChild(tarjeta);
     
-    // Mapeo dinámico corregido para el resto de categorías
+    // Mapeo dinámico de subcategorías
     ['desayuno', 'colacionTarde', 'postre'].forEach(subCat => {
       const filaTab = document.createElement('div');
       filaTab.className = 'receta-card';
       const itemComida = menuDia[subCat];
       const destino = subCat === 'desayuno' ? 'desayunos' : subCat === 'colacionTarde' ? 'colaciones' : 'postres';
+      const tituloSeccion = subCat === 'desayuno' ? '🥞 Desayuno' : subCat === 'colacionTarde' ? '🍎 Colación' : '🍓 Postre';
       
       filaTab.innerHTML = `
-        <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b;">📅 ${dia.toUpperCase()}</div>
-        <div style="padding:15px;">
-          <p style="font-weight:600;">${itemComida ? itemComida.nombre : 'Sugerencia natural de la estación'}</p>
+        <div style="padding:15px; background: #f8fafc; border-bottom:1px solid #e2e8f0; font-weight:bold; color:#1e293b; text-align:center;">📅 ${dia.toUpperCase()}</div>
+        <div style="padding:20px; text-align:center;">
+          <h4 style="color:var(--color-secundario); margin-bottom:8px; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">${tituloSeccion}</h4>
+          <p style="font-weight:600; color:#334155; font-size:1.05rem;">${itemComida ? itemComida.nombre : 'Sugerencia natural de la estación'}</p>
         </div>
       `;
-      subGrillas[destino].appendChild(filaTab);
+      if (subGrillas[destino]) subGrillas[destino].appendChild(filaTab);
     });
   });
 
+  // Manejo de clicks en las subpestañas
   const botonesTabs = document.querySelectorAll('.tab-btn');
   botonesTabs.forEach(boton => {
     boton.addEventListener('click', () => {
       botonesTabs.forEach(b => b.classList.remove('active'));
       boton.classList.add('active');
+      
       document.querySelectorAll('.tab-content-view').forEach(v => v.classList.add('hidden'));
-      document.getElementById(`grid-view-${boton.getAttribute('data-tab')}`).classList.remove('hidden');
+      
+      const vistaObjetivo = document.getElementById(`grid-view-${boton.getAttribute('data-tab')}`);
+      if (vistaObjetivo) vistaObjetivo.classList.remove('hidden');
     });
   });
 }
 
-/* ==========================================================================
-   5. FUNCIÓN RENDERIZAR FINANZAS Y LISTA DE COMPRAS
-   ========================================================================== */
 function mostrarFinanzasYCompras(finanzas) {
   const totalesAcumulados = finanzas.totalesAcumulados || {};
   const listaDeCompras = finanzas.listaDeCompras || [];
@@ -271,29 +309,4 @@ function mostrarFinanzasYCompras(finanzas) {
       cuerpoTabla.insertAdjacentHTML('beforeend', filaHTML);
     });
   }
-}
-
-// Inicialización de persistencia al cargar la app
-document.addEventListener('DOMContentLoaded', () => {
-  const datosGuardados = localStorage.getItem('nutribebe_datos');
-  if (datosGuardados) {
-    const datos = JSON.parse(datosGuardados);
-    if(document.getElementById('age') && datos.edadMeses) {
-      document.getElementById('age').value = datos.edadMeses;
-      calcularConversionEdad(parseInt(datos.edadMeses));
-    }
-    if(document.getElementById('gender') && datos.sexoBiologico) document.getElementById('gender').value = datos.sexoBiologico;
-    if(document.getElementById('format') && datos.formatoAlimentacion) document.getElementById('format').value = datos.formatoAlimentacion;
-    if(document.getElementById('weight') && datos.pesoKg) document.getElementById('weight').value = datos.pesoKg;
-    if(document.getElementById('height') && datos.tallaCm) document.getElementById('height').value = datos.tallaCm;
-    if(document.getElementById('budget') && datos.presupuestoMaximoCLP) document.getElementById('budget').value = datos.presupuestoMaximoCLP;
-  }
-});
-
-if (btnLimpiar) {
-  btnLimpiar.addEventListener('click', () => {
-    formulario.reset();
-    localStorage.removeItem('nutribebe_datos');
-    volverAlFormulario();
-  });
 }
