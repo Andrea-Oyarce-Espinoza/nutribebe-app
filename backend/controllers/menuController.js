@@ -267,9 +267,6 @@ exports.generarMenuPersonalizado = async (req, res) => {
     res.status(500).json({ mensaje: 'Error al procesar el menú', error: error.message });
   }
 };
-const IngredientPrice = require('../models/IngredientPrice'); // Asegúrate de que apunte bien a tu modelo
-
-// ... (aquí están tus otras funciones como obtenerRecetas, crearReceta, etc.)
 
 // NUEVA FUNCIÓN PARA PROCESAR EL POST DE THUNDER CLIENT
 exports.crearIngrediente = async (req, res) => {
