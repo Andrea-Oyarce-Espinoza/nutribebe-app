@@ -261,3 +261,41 @@ exports.crearIngrediente = async (req, res) => {
         res.status(500).json({ error: "Error en el servidor al procesar la lista.", detalle: error.message });
     }
 };
+
+// RUTA NUEVA ACTUALIZADA: Para sobrescribir recetas sin perder alérgenos ni descripciones
+exports.actualizarOMasivoRecetas = async (req, res) => {
+    try {
+        const datos = req.body;
+
+        if (Array.isArray(datos)) {
+            const operaciones = datos.map(receta => {
+                return Receta.findOneAndUpdate(
+                    { nombre: receta.nombre.trim() },
+                    {
+                        $set: {
+                            nombre: receta.nombre.trim(),
+                            categoria: receta.categoria,
+                            formato: receta.formato,
+                            edadMinimaMeses: receta.edadMinimaMeses,
+                            alergenos: receta.alergenos || [], // ✨ Conserva y añade los alérgenos enviados
+                            descripcion: receta.descripcion || "Receta nutritiva recomendada para su desarrollo integral.", // ✨ Conserva la descripción
+                            componentesNutricionales: receta.componentesNutricionales,
+                            pasos: receta.pasos || []
+                        }
+                    },
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
+                );
+            });
+
+            await Promise.all(operaciones);
+            return res.status(200).json({ 
+                mensaje: `🎉 Base de datos sobrescrita con éxito. Se procesaron ${datos.length} recetas de manera segura.` 
+            });
+        } else {
+            return res.status(400).json({ error: "El cuerpo de la petición debe ser un arreglo [ ] de recetas." });
+        }
+    } catch (error) {
+        console.error("🚨 Error al sobrescribir recetas:", error);
+        res.status(500).json({ error: "Error en el servidor al actualizar las recetas.", detalle: error.message });
+    }
+};
