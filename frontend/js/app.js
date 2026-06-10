@@ -362,7 +362,7 @@ function mostrarFinanzasYCompras(finanzas) {
   podioRow.innerHTML = '';
   cuerpoTabla.innerHTML = '';
 
-  const ordenados = Object.entries(totalesAcumulados).sort((a, b) => a[1] - b[1]);
+  const ordenados = Object.entries(totalesAcumulados).sort((a, b) => (a[1] || 0) - (b[1] || 0));
   if (ordenados.length > 0) {
     const [superMasBarato] = ordenados[0];
 
@@ -372,7 +372,7 @@ function mostrarFinanzasYCompras(finanzas) {
         <div style="flex: 1; min-width: 200px; padding: 20px; border-radius: 12px; border: 2px solid ${esGanador ? '#2ecc71' : '#e2e8f0'}; background: ${esGanador ? '#f0fdf4' : '#ffffff'}; text-align: center;">
           ${esGanador ? '<span style="background:#2ecc71; color:white; font-size:0.75rem; padding:4px 8px; border-radius:12px; font-weight:bold;">🏆 RECOMENDADO</span>' : ''}
           <h4 style="margin:10px 0 5px; color:#1e293b;">${supermercado}</h4>
-          <p style="font-size:1.6rem; font-weight:bold; color:${esGanador ? '#27ae60' : '#475569'};">$${total.toLocaleString('es-CL')}</p>
+          <p style="font-size:1.6rem; font-weight:bold; color:${esGanador ? '#27ae60' : '#475569'};">$${(total || 0).toLocaleString('es-CL')}</p>
         </div>
       `;
       podioRow.insertAdjacentHTML('beforeend', cardHTML);
