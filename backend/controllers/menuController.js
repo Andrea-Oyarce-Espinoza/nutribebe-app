@@ -68,7 +68,7 @@ exports.crearReceta = async (req, res) => {
 
 exports.generarMenuPersonalizado = async (req, res) => {
     try {
-        const { edadMeses, pesoKg, sexoBiologico, tallaCm, alergias, formatoAlimentacion, mercaderiaEnCasa } = req.body;
+        const { edadMeses, pesoKg, sexoBiologico, tallaCm, alergias, formatoAlimentacion, mercaderiaEnCasa, cantidadDias } = req.body;
 
         if (!edadMeses || !pesoKg || !sexoBiologico || !tallaCm) {
             return res.status(400).json({ mensaje: "Faltan datos biométricos obligatorios." });
@@ -100,7 +100,9 @@ exports.generarMenuPersonalizado = async (req, res) => {
         const colaciones = recetasDisponibles.filter(r => r.categoria === 'colacion');
         const postres = recetasDisponibles.filter(r => r.categoria === 'postre');
 
-        const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        const todosDias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        const numDias = (cantidadDias && cantidadDias >= 1 && cantidadDias <= 7) ? parseInt(cantidadDias) : 7;
+        const dias = todosDias.slice(0, numDias);
         const menuSemanalRaw = {};
 
         // Función segura de selección aleatoria
@@ -166,7 +168,10 @@ exports.generarMenuPersonalizado = async (req, res) => {
 
         nombresUnicosAComprar.forEach(nombreIng => {
             const coincidencias = ingredientesAComprar.filter(i => i.nombre.trim().toLowerCase() === nombreIng);
-            const cantidadTotalTexto = coincidencias.map(c => c.cantidad).join(' + ');
+            // Consolidar cantidades: agrupar las que tienen valor numérico + unidad, descartar duplicados vacíos
+            const cantidadesValidas = coincidencias.map(c => c.cantidad).filter(c => c && c.trim() !== '');
+            const cantidadesUnicas = [...new Set(cantidadesValidas)];
+            const cantidadTotalTexto = cantidadesUnicas.length > 0 ? cantidadesUnicas.join(' + ') : 'Al gusto';
 
             const precioData = mapaPrecios[nombreIng];
             let precioLider = 0, precioJumbo = 0, precioUnimarc = 0, precioRef = 0;
@@ -182,15 +187,16 @@ exports.generarMenuPersonalizado = async (req, res) => {
                 }
             }
 
-            if (precioLider === 0) precioLider = precioRef || 1200;
-            if (precioJumbo === 0) precioJumbo = precioRef ? precioRef * 1.15 : 1400;
-            if (precioUnimarc === 0) precioUnimarc = precioRef ? precioRef * 1.05 : 1300;
+            const precioFallback = precioRef > 0 ? precioRef : 1200;
+            if (precioLider === 0) precioLider = precioRef > 0 ? precioRef : 1200;
+            if (precioJumbo === 0) precioJumbo = precioRef > 0 ? Math.round(precioRef * 1.15) : 1400;
+            if (precioUnimarc === 0) precioUnimarc = precioRef > 0 ? Math.round(precioRef * 1.05) : 1300;
 
             totalesAcumulados.Lider += precioLider;
             totalesAcumulados.Jumbo += precioJumbo;
             totalesAcumulados.Unimarc += precioUnimarc;
 
-            gastoSemanalCalculado += precioRef || precioLider;
+            gastoSemanalCalculado += precioFallback;
 
             listaDeComprasDetallada.push({
                 ingrediente: nombreIng,
@@ -199,9 +205,12 @@ exports.generarMenuPersonalizado = async (req, res) => {
             });
         });
 
-        ingredientesAComprar.forEach(ing => {
-            const data = mapaPrecios[ing.nombre.trim().toLowerCase()];
-            if (data) dineroAhorradoSemanal += (data.precioPromedio * 0.2);
+        // Ahorro real = precio de los ingredientes que ya tienes en casa (despensa)
+        const ingredientesEnDespensa = todosLosIngredientesDelMenu.filter(ing => despensaSet.has(ing.nombre.trim().toLowerCase()));
+        const nombresUnicosDespensa = [...new Set(ingredientesEnDespensa.map(i => i.nombre.trim().toLowerCase()))];
+        const infoPreciosDespensa = await IngredientPrice.find({ nombre: { $in: nombresUnicosDespensa } });
+        infoPreciosDespensa.forEach(data => {
+            dineroAhorradoSemanal += (data.precioPromedio || 1200);
         });
 
         res.status(200).json({

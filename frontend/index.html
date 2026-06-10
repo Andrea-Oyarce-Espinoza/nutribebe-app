@@ -73,6 +73,19 @@
             </div>
 
             <div class="form-group">
+              <label for="dias">Días del Menú:</label>
+              <select name="dias" id="dias" required>
+                <option value="1">1 día</option>
+                <option value="2">2 días</option>
+                <option value="3">3 días</option>
+                <option value="4">4 días</option>
+                <option value="5">5 días</option>
+                <option value="6">6 días</option>
+                <option value="7" selected>7 días (semana completa)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="budget">Presupuesto Máximo Diario (CLP):</label>
               <input type="number" id="budget" name="budget" min="0" placeholder="Ej: 5000" required>
             </div>

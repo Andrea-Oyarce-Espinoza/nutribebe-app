@@ -67,10 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const pesoKg = parseFloat(document.getElementById('weight').value);
       const tallaCm = parseFloat(document.getElementById('height').value);
       const presupuestoMaximoCLP = parseInt(document.getElementById('budget').value);
+      const cantidadDias = parseInt(document.getElementById('dias').value) || 7;
       const alergias = Array.from(document.querySelectorAll('input[name="allergens"]:checked')).map(cb => cb.value);
       const mercaderiaEnCasa = Array.from(document.querySelectorAll('input[name="despensa"]:checked')).map(el => el.value);
 
-      const datosBebe = { edadMeses, sexoBiologico, pesoKg, tallaCm, alergias, presupuestoMaximoCLP, formatoAlimentacion: getFormatoAlimentacion() };
+      const datosBebe = { edadMeses, sexoBiologico, pesoKg, tallaCm, alergias, presupuestoMaximoCLP, formatoAlimentacion: getFormatoAlimentacion(), cantidadDias };
 
       try {
         vistaForm.classList.add('hidden');
@@ -124,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('weight') && datos.pesoKg) document.getElementById('weight').value = datos.pesoKg;
     if (document.getElementById('height') && datos.tallaCm) document.getElementById('height').value = datos.tallaCm;
     if (document.getElementById('budget') && datos.presupuestoMaximoCLP) document.getElementById('budget').value = datos.presupuestoMaximoCLP;
+    if (document.getElementById('dias') && datos.cantidadDias) document.getElementById('dias').value = datos.cantidadDias;
   }
 
   if (btnLimpiar) {
@@ -244,6 +246,9 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
 
   if (!datos.menuSemanal || Object.keys(datos.menuSemanal).length === 0) return;
 
+  // Limpiar siempre cualquier informe nutricional previo antes de agregar el nuevo
+  document.querySelectorAll('.alert-box-container').forEach(el => el.remove());
+
   if (datos.infoNutricionalBebe) {
     const infoNutri = datos.infoNutricionalBebe;
     const infoBox = document.createElement('div');
@@ -251,7 +256,7 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
     infoBox.className = 'alert-box-container';
     infoBox.innerHTML = `
       <h3>📊 Informe de Requerimientos Nutricionales</h3>
-      <p>Estado del bebé: <strong>${infoNutri.evaluacionBiometrica.estadoNutricional}</strong> (IMC: ${infoNutri.evaluacionBiometrica.imcCalculado})</p>
+      <p>Estado del bebé: <strong>${infoNutri.evaluacionBiometrica.estadoNutricional}</strong></p>
       <p style="margin-top:5px; font-size:0.9rem;">🎯 Meta: ${infoNutri.caloriasMeta} kcal/día | 💧 Líquidos: ${infoNutri.liquidosMeta} mL/día</p>
     `;
     const v2 = document.getElementById('vista-paso2');
