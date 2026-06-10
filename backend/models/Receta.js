@@ -13,7 +13,8 @@ const recetaSchema = new mongoose.Schema({
     required: true  // Ahora conviven ambos campos perfectamente
   }, 
   edadMinimaMeses: { type: Number, required: true }, 
-  alergenos: [String], 
+  alergenos: [String],
+  descripcion: { type: String, default: "" }, 
   componentesNutricionales: {
     carbohidratos: [{ nombre: String, cantidad: String }],
     vegetales: [{ nombre: String, cantidad: String }],

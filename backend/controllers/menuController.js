@@ -30,299 +30,234 @@ function calcularRequerimientosNutricionales(edadMeses, pesoKg, sexoBiologico, t
   const caloriasTotalesMeta = Math.round(pesoKg * factorCalorias);
   const liquidosTotalesMeta = Math.round(pesoKg * factorLiquidos);
 
-  const proteinasGramos = Math.round((caloriasTotalesMeta * 0.12) / 4);     
-  const carbohidratosGramos = Math.round((caloriasTotalesMeta * 0.50) / 4); 
-  const grasasGramos = Math.round((caloriasTotalesMeta * 0.38) / 9);         
+  let estadoNutricional = "Normopeso";
+  const tallaMetros = tallaCm / 100;
+  const imc = (pesoKg / (tallaMetros * tallaMetros)).toFixed(1);
 
-  let estadoNutricional = "Desarrollo Normal";
-  if (edadMeses === 12 && pesoKg < 7.5) estadoNutricional = "Bajo Peso (Sugerir control médico)";
-  if (edadMeses === 12 && pesoKg > 12.5) estadoNutricional = "Sobrepeso (Sugerir evaluación)";
+  if (imc < 14) estadoNutricional = "Bajo Peso";
+  else if (imc >= 17 && imc < 19) estadoNutricional = "Sobrepeso";
+  else if (imc >= 19) estadoNutricional = "Obesidad";
 
   return {
     caloriasMeta: caloriasTotalesMeta,
     liquidosMeta: liquidosTotalesMeta,
-    macrosMeta: { proteinasGramos, carbohidratosGramos, grasasGramos },
-    evaluacionBiometrica: {
-      estadoNutricional,
-      imcCalculado: (pesoKg / ((tallaCm / 100) * (tallaCm / 100))).toFixed(1)
-    }
+    evaluacionBiometrica: { imcCalculado: parseFloat(imc), estadoNutricional }
   };
 }
 
-// --- CONTROLADORES DE RUTA ---
+// --- CONTROLADORES PRINCIPALES ---
 
-// 1. Obtener todas las recetas con sus cálculos de precios base dinámicos de la BD
 exports.obtenerRecetas = async (req, res) => {
-  try {
-    // Consultamos las recetas y los precios de forma paralela en MongoDB Atlas
-    const [recetasDesdeAtlas, listaPreciosBD] = await Promise.all([
-      Receta.find(),
-      IngredientPrice.find()
-    ]);
-
-    // Crear mapa rápido en memoria indexado por el nombre del ingrediente
-    const mapaPrecios = {};
-    listaPreciosBD.forEach(item => {
-      mapaPrecios[item.nombre.toLowerCase().trim()] = item.precioPromedio;
-    });
-    
-    const recetasConPrecio = recetasDesdeAtlas.map(receta => {
-      let costoTotalReceta = 0;
-      const todosLosIngredientes = obtenerTodosLosIngredientes(receta);
-      
-      todosLosIngredientes.forEach(ing => {
-        if (ing && ing.nombre) {
-          const nombreLimpio = ing.nombre.toLowerCase().trim();
-          costoTotalReceta += mapaPrecios[nombreLimpio] || 500;
-        }
-      });
-      return {
-        ...receta.toObject(),
-        presupuestoEstimadoCLP: costoTotalReceta
-      };
-    });
-
-    res.json(recetasConPrecio);
-  } catch (error) {
-    res.status(500).json({ mensaje: 'Error al obtener recetas', error: error.message });
-  }
-};
-
-// 2. Guardar nueva receta en MongoDB Atlas
-exports.crearReceta = async (req, res) => {
-  try {
-    const nuevaReceta = new Receta(req.body);
-    await nuevaReceta.save();
-    res.status(201).json({ mensaje: '¡Receta guardada con éxito en la nube!', receta: nuevaReceta });
-  } catch (error) {
-    res.status(400).json({ mensaje: 'Error al guardar en Atlas', error: error.message });
-  }
-};
-
-// 3. Generar menú personalizado inteligente semanal con Lista de Compras por Supermercado
-exports.generarMenuPersonalizado = async (req, res) => {
-  try {
-    const { edadMeses, sexoBiologico, pesoKg, tallaCm, alergias, presupuestoMaximoCLP, mercaderiaEnCasa, formatoAlimentacion } = req.body;
-    const despensaUsuario = (mercaderiaEnCasa || []).map(i => i.toLowerCase().trim());
-
-    const perfilNutricional = calcularRequerimientosNutricionales(edadMeses, pesoKg, sexoBiologico, tallaCm);
-    
-    const [recetasDesdeAtlas, listaPreciosBD] = await Promise.all([
-      Receta.find(), 
-      IngredientPrice.find()
-    ]);
-
-    const mapaPrecios = {};
-    listaPreciosBD.forEach(item => {
-      mapaPrecios[item.nombre.toLowerCase().trim()] = item.precioPromedio;
-    });
-
-    const recetasAptas = recetasDesdeAtlas.map(receta => {
-      let costo = 0;
-      const todosLosIngredientes = obtenerTodosLosIngredientes(receta);
-      
-      todosLosIngredientes.forEach(ing => {
-        if (ing && ing.nombre) {
-          const nombreIngrediente = ing.nombre.toLowerCase().trim();
-
-          // Si el usuario NO lo tiene en su despensa, calculamos el costo base referencial
-          if (!despensaUsuario.includes(nombreIngrediente)) {
-            costo += mapaPrecios[nombreIngrediente] || 500;
-          }
-        }      
-      });
-      return { ...receta.toObject(), presupuestoEstimadoCLP: costo };
-    }).filter(receta => {
-      // 1. Filtro de Edad Seguro
-      const edadMin = receta.edadMinimaMeses !== undefined ? receta.edadMinimaMeses : 6;
-      if (edadMeses < edadMin) return false;
-      
-      // 2. Filtro de Alérgenos
-      if (alergias && alergias.length > 0 && receta.alergenos) {
-        const esAlergico = receta.alergenos.some(alergene => alergias.includes(alergene));
-        if (esAlergico) return false;
-      }
-
-      // 3. Filtro: Formato de Alimentación (BLW / Papilla / Mixto)
-      const formatoReceta = receta.formato || 'Mixto';
-      if (formatoAlimentacion && formatoAlimentacion !== 'Mixto') {
-        if (formatoReceta !== 'Mixto' && formatoReceta !== formatoAlimentacion){
-          return false;
-        }
-      }
-      return true;
-    });
-
-    const principales = recetasAptas.filter(r => r.categoria === 'principal');
-    const desayunos = recetasAptas.filter(r => r.categoria === 'desayuno');
-    const colaciones = recetasAptas.filter(r => r.categoria === 'colacion');
-    const postres = recetasAptas.filter(r => r.categoria === 'postre');
-
-    if (principales.length === 0) {
-      return res.status(404).json({ 
-        mensaje: "No se encontraron recetas principales aptas para construir el almuerzo y cena del menú."
-      });
+    try {
+        const recetas = await Receta.find();
+        res.status(200).json(recetas);
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener recetas." });
     }
-
-    const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-    const calendarioMenu = {};
-    let gastoTotalSemana = 0;
-
-    // Estructura temporal para acumular ingredientes de la lista de compras semanal
-    const consolidadoListaCompras = {};
-
-    diasSemana.forEach((dia, index) => {
-      const almuerzoCena = principales[index % principales.length] || principales[0];
-      const desayunoDia = desayunos[index % desayunos.length] || null;
-      const colacionDia = colaciones[index % colaciones.length] || null;
-      const postreDia = postres[index % postres.length] || null;
-
-      const costoAlmuerzoCenaTotal = (almuerzoCena.presupuestoEstimadoCLP || 0) * 2;
-      const costoDesayuno = desayunoDia ? (desayunoDia.presupuestoEstimadoCLP || 0) : 0;
-      const costoColacion = colacionDia ? (colacionDia.presupuestoEstimadoCLP || 0) : 0;
-      const costoPostre = postreDia ? (postreDia.presupuestoEstimadoCLP || 0) : 0;
-
-      const costoDiario = costoAlmuerzoCenaTotal + costoDesayuno + costoColacion + costoPostre;
-      gastoTotalSemana += costoDiario;
-
-      calendarioMenu[dia] = {
-        desayuno: desayunoDia,
-        almuerzo: almuerzoCena,
-        cena: almuerzoCena,    
-        colacionTarde: colacionDia,
-        postre: postreDia,
-        costoDiarioCalculado: costoDiario
-      };
-
-      // --- ACUMULACIÓN DE INGREDIENTES PARA LA LISTA DE COMPRAS ---
-      const comidasDelDia = [desayunoDia, almuerzoCena, almuerzoCena, colacionDia, postreDia];
-      comidasDelDia.forEach(receta => {
-        if (!receta) return;
-        const ings = obtenerTodosLosIngredientes(receta);
-        ings.forEach(ing => {
-          if (ing && ing.nombre) {
-            const nombreLimpio = ing.nombre.toLowerCase().trim();
-            // Evitar agregar si el usuario ya cuenta con stock en despensa
-            if (despensaUsuario.includes(nombreLimpio)) return;
-
-            if (!consolidadoListaCompras[nombreLimpio]) {
-              consolidadoListaCompras[nombreLimpio] = {
-                nombre: ing.nombre,
-                cantidadNecesaria: 0
-              };
-            }
-            consolidadoListaCompras[nombreLimpio].cantidadNecesaria += 1;
-          }
-        });
-      });
-    });
-
-    // --- CRUCE CON CADENAS DE SUPERMERCADOS ---
-    const totalesPorCadena = { Lider: 0, Jumbo: 0, Unimarc: 0 };
-    const desgloseFinalProductos = [];
-
-    Object.keys(consolidadoListaCompras).forEach(keyNombre => {
-      const producto = consolidadoListaCompras[keyNombre];
-      const buscarEnBD = listaPreciosBD.find(p => p.nombre.toLowerCase().trim() === keyNombre);
-      
-      const costosPorSúper = {};
-      
-      ['Lider', 'Jumbo', 'Unimarc'].forEach(cadena => {
-        let precioUnitario = 500; // Respaldo global
-        
-        if (buscarEnBD) {
-          const cadenaEspecifica = buscarEnBD.preciosPorCadena.find(c => c.supermercado === cadena);
-          precioUnitario = cadenaEspecifica ? cadenaEspecifica.precio : buscarEnBD.precioPromedio;
-        }
-
-        const costoTotalProducto = precioUnitario * producto.cantidadNecesaria;
-        costosPorSúper[cadena] = costoTotalProducto;
-        totalesPorCadena[cadena] += costoTotalProducto;
-      });
-
-      desgloseFinalProductos.push({
-        ingrediente: producto.nombre,
-        cantidad: producto.cantidadNecesaria,
-        preciosPorCadena: costosPorSúper
-      });
-    });
-
-    const presupuestoSemanalUsuario = presupuestoMaximoCLP * 7;
-    const dineroAhorradoSemana = Math.max(0, presupuestoSemanalUsuario - gastoTotalSemana);
-
-    res.json({
-      success: true,
-      infoNutricionalBebe: perfilNutricional,
-      gastoSemanalCalculado: gastoTotalSemana,
-      dineroAhorradoSemanal: dineroAhorradoSemana,
-      menuSemanal: calendarioMenu,
-      finanzasSupermercados: {
-        totalesAcumulados: totalesPorCadena, // { Lider: 12500, Jumbo: 15300, Unimarc: 13100 }
-        listaDeCompras: desgloseFinalProductos // Array detallado por producto para mapear la tabla
-      }
-    });
-
-  } catch (error) {
-    console.error("Error al procesar el menú:", error);
-    res.status(500).json({ mensaje: 'Error al procesar el menú', error: error.message });
-  }
 };
 
-// CONTROLADOR ACTUALIZADO PARA EVITAR DUPLICADOS 🚀
+exports.crearReceta = async (req, res) => {
+    try {
+        const nuevaReceta = new Receta(req.body);
+        await nuevaReceta.save();
+        res.status(201).json({ mensaje: "Receta creada con éxito.", data: nuevaReceta });
+    } catch (error) {
+        res.status(400).json({ error: "Error al crear la receta.", detalle: error.message });
+    }
+};
+
+exports.generarMenuPersonalizado = async (req, res) => {
+    try {
+        const { edadMeses, pesoKg, sexoBiologico, tallaCm, alergias, formatoAlimentacion, mercaderiaEnCasa } = req.body;
+
+        if (!edadMeses || !pesoKg || !sexoBiologico || !tallaCm) {
+            return res.status(400).json({ mensaje: "Faltan datos biométricos obligatorios." });
+        }
+
+        const infoNutricionalBebe = calcularRequerimientosNutricionales(edadMeses, pesoKg, sexoBiologico, tallaCm);
+
+        // 🔥 CORRECCIÓN CRÍTICA: Se cambia 'formatoAlimentacion' por 'formato' que es el campo real en MongoDB
+        const queryFiltros = {
+            edadMinimaMeses: { $lte: edadMeses }
+        };
+
+        if (formatoAlimentacion && formatoAlimentacion !== 'Mixto') {
+            queryFiltros.formato = formatoAlimentacion;
+        }
+        if (alergias && alergias.length > 0) {
+            queryFiltros.alergenos = { $nin: alergias };
+        }
+
+        const recetasDisponibles = await Receta.find(queryFiltros);
+
+        if (recetasDisponibles.length === 0) {
+            return res.status(404).json({ mensaje: "No se encontraron recetas que coincidan con los filtros." });
+        }
+
+        // Separación por categorías reales de tu Base de Datos ('principal', 'desayuno', 'colacion', 'postre')
+        const principales = recetasDisponibles.filter(r => r.categoria === 'principal');
+        const desayunos = recetasDisponibles.filter(r => r.categoria === 'desayuno');
+        const colaciones = recetasDisponibles.filter(r => r.categoria === 'colacion');
+        const postres = recetasDisponibles.filter(r => r.categoria === 'postre');
+
+        const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        const menuSemanalRaw = {};
+
+        // Función segura de selección aleatoria
+        const obtenerAleatorio = (arr) => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
+
+        dias.forEach(dia => {
+            menuSemanalRaw[dia] = {
+                almuerzo: obtenerAleatorio(principales),
+                desayuno: obtenerAleatorio(desayunos),
+                colacionTarde: obtenerAleatorio(colaciones),
+                postre: obtenerAleatorio(postres)
+            };
+        });
+
+        // 🍳 PROCESAMIENTO Y FORMATEO DE RECETAS ENVIADAS AL FRONTEND
+        const menuSemanalFormateado = {};
+        const todosLosIngredientesDelMenu = [];
+
+        for (const dia in menuSemanalRaw) {
+            menuSemanalFormateado[dia] = {};
+            ['almuerzo', 'desayuno', 'colacionTarde', 'postre'].forEach(subCat => {
+                const recetaOriginal = menuSemanalRaw[dia][subCat];
+                if (recetaOriginal) {
+                    const listaIngredientesUnificada = obtenerTodosLosIngredientes(recetaOriginal);
+                    todosLosIngredientesDelMenu.push(...listaIngredientesUnificada);
+
+                    // Devolvemos una estructura limpia y fácil de procesar por app.js
+                    menuSemanalFormateado[dia][subCat] = {
+                        _id: recetaOriginal._id,
+                        nombre: recetaOriginal.nombre,
+                        categoria: recetaOriginal.categoria,
+                        formato: recetaOriginal.formato,
+                        descripcion: recetaOriginal.descripcion || "Receta nutritiva recomendada para su desarrollo integral.",
+                        pasos: recetaOriginal.pasos || [],
+                        ingredientes: listaIngredientesUnificada.map(i => ({
+                            nombre: i.nombre,
+                            cantidad: i.cantidad || ''
+                        }))
+                    };
+                } else {
+                    menuSemanalFormateado[dia][subCat] = null;
+                }
+            });
+        }
+
+        // --- MÓDULO DE FINANZAS Y SUPERMERCADOS ---
+        const despensaSet = new Set((mercaderiaEnCasa || []).map(i => i.trim().toLowerCase()));
+        const ingredientesAComprar = todosLosIngredientesDelMenu.filter(ing => !despensaSet.has(ing.nombre.trim().toLowerCase()));
+
+        const nombresUnicosAComprar = [...new Set(ingredientesAComprar.map(i => i.nombre.trim().toLowerCase()))];
+        const infoPreciosIngredientes = await IngredientPrice.find({ nombre: { $in: nombresUnicosAComprar } });
+
+        const mapaPrecios = {};
+        infoPreciosIngredientes.forEach(ing => {
+            mapaPrecios[ing.nombre.toLowerCase()] = ing;
+        });
+
+        let gastoSemanalCalculado = 0;
+        let dineroAhorradoSemanal = 0;
+        const listaDeComprasDetallada = [];
+
+        const totalesAcumulados = { Lider: 0, Jumbo: 0, Unimarc: 0 };
+
+        nombresUnicosAComprar.forEach(nombreIng => {
+            const coincidencias = ingredientesAComprar.filter(i => i.nombre.trim().toLowerCase() === nombreIng);
+            const cantidadTotalTexto = coincidencias.map(c => c.cantidad).join(' + ');
+
+            const precioData = mapaPrecios[nombreIng];
+            let precioLider = 0, precioJumbo = 0, precioUnimarc = 0, precioRef = 0;
+
+            if (precioData) {
+                precioRef = precioData.precioPromedio || 0;
+                if (precioData.preciosPorCadena && precioData.preciosPorCadena.length > 0) {
+                    precioData.preciosPorCadena.forEach(p => {
+                        if (p.supermercado === 'Lider') precioLider = p.precio;
+                        if (p.supermercado === 'Jumbo') precioJumbo = p.precio;
+                        if (p.supermercado === 'Unimarc') precioUnimarc = p.precio;
+                    });
+                }
+            }
+
+            if (precioLider === 0) precioLider = precioRef || 1200;
+            if (precioJumbo === 0) precioJumbo = precioRef ? precioRef * 1.15 : 1400;
+            if (precioUnimarc === 0) precioUnimarc = precioRef ? precioRef * 1.05 : 1300;
+
+            totalesAcumulados.Lider += precioLider;
+            totalesAcumulados.Jumbo += precioJumbo;
+            totalesAcumulados.Unimarc += precioUnimarc;
+
+            gastoSemanalCalculado += precioRef || precioLider;
+
+            listaDeComprasDetallada.push({
+                ingrediente: nombreIng,
+                cantidad: cantidadTotalTexto || 'Al gusto',
+                preciosPorCadena: { Lider: precioLider, Jumbo: precioJumbo, Unimarc: precioUnimarc }
+            });
+        });
+
+        ingredientesAComprar.forEach(ing => {
+            const data = mapaPrecios[ing.nombre.trim().toLowerCase()];
+            if (data) dineroAhorradoSemanal += (data.precioPromedio * 0.2);
+        });
+
+        res.status(200).json({
+            infoNutricionalBebe,
+            menuSemanal: menuSemanalFormateado,
+            gastoSemanalCalculado: Math.round(gastoSemanalCalculado),
+            dineroAhorradoSemanal: Math.round(dineroAhorradoSemanal),
+            finanzasSupermercados: {
+                totalesAcumulados: {
+                    Lider: Math.round(totalesAcumulados.Lider),
+                    Jumbo: Math.round(totalesAcumulados.Jumbo),
+                    Unimarc: Math.round(totalesAcumulados.Unimarc)
+                },
+                listaDeCompras: listaDeComprasDetallada
+            }
+        });
+
+    } catch (error) {
+        console.error("🚨 Error grave en el Algoritmo del Menú:", error);
+        res.status(500).json({ error: "Error en el servidor al procesar el menú.", detalle: error.message });
+    }
+};
+
 exports.crearIngrediente = async (req, res) => {
     try {
         const datos = req.body;
-
-        // Si envías un arreglo de ingredientes (Inserción masiva inteligente)
         if (Array.isArray(datos)) {
             const operaciones = datos.map(ingrediente => {
                 return IngredientPrice.findOneAndUpdate(
-                    { nombre: ingrediente.nombre.trim() }, // Criterio de búsqueda: evita duplicar si coincide el nombre
-                    { 
+                    { nombre: ingrediente.nombre.trim().toLowerCase() },
+                    {
                         $set: {
-                            categoria: ingrediente.categoria || ingrediente.grupoNutricional, // Mapea tu grupo si viene del JSON anterior
-                            // Calcula un promedio básico si no viene explícito en el JSON
-                            precioPromedio: ingrediente.precioPromedio || Math.round(
-                                (ingrediente.preciosPorCadena.Lider + ingrediente.preciosPorCadena.Jumbo + ingrediente.preciosPorCadena.Unimarc) / 3
-                            ),
-                            // Transforma el formato plano de cadenas al arreglo semántico que requiere tu modelo de datos
-                            preciosPorCadena: Array.isArray(ingrediente.preciosPorCadena) 
-                                ? ingrediente.preciosPorCadena 
-                                : [
-                                    { supermercado: "Lider", precio: ingrediente.preciosPorCadena.Lider },
-                                    { supermercado: "Jumbo", precio: ingrediente.preciosPorCadena.Jumbo },
-                                    { supermercado: "Unimarc", precio: ingrediente.preciosPorCadena.Unimarc }
-                                ]
+                            nombre: ingrediente.nombre.trim().toLowerCase(),
+                            categoria: ingrediente.categoria || 'otros',
+                            precioPromedio: ingrediente.precioPromedio,
+                            preciosPorCadena: [
+                                { supermercado: "Lider", precio: ingrediente.preciosPorCadena.Lider },
+                                { supermercado: "Jumbo", precio: ingrediente.preciosPorCadena.Jumbo },
+                                { supermercado: "Unimarc", precio: ingrediente.preciosPorCadena.Unimarc }
+                            ]
                         }
                     },
-                    { upsert: true, new: true, setDefaultsOnInsert: true } // upsert: true es la clave mágica
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
                 );
             });
-
-            // Ejecuta todas las verificaciones en paralelo
             await Promise.all(operaciones);
-
-            return res.status(200).json({
-                mensaje: `🎉 Procesamiento completado. Se crearon los ingredientes nuevos y se actualizaron los existentes sin duplicar.`
-            });
-
+            return res.status(200).json({ mensaje: `🎉 Procesamiento completado. Se crearon e ingresaron ingredientes correctamente.` });
         } else {
-            // Manejo para un solo ingrediente individual
             const resultado = await IngredientPrice.findOneAndUpdate(
-                { nombre: datos.nombre.trim() },
+                { nombre: datos.nombre.trim().toLowerCase() },
                 { $set: datos },
                 { upsert: true, new: true, setDefaultsOnInsert: true }
             );
-            return res.status(200).json({
-                mensaje: "✅ Ingrediente procesado correctamente de forma individual.",
-                data: resultado
-            });
+            return res.status(200).json({ mensaje: "✅ Ingrediente procesado de forma individual.", data: resultado });
         }
     } catch (error) {
-        console.error("🚨 Error al procesar ingredientes:", error);
-        res.status(500).json({
-            error: "Hubo un error en el servidor al procesar la lista.",
-            detalle: error.message
-        });
+        res.status(500).json({ error: "Error en el servidor al procesar la lista.", detalle: error.message });
     }
 };
