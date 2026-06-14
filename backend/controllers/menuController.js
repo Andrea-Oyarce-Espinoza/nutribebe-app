@@ -164,7 +164,7 @@ exports.generarMenuPersonalizado = async (req, res) => {
         let dineroAhorradoSemanal = 0;
         const listaDeComprasDetallada = [];
 
-        const totalesAcumulados = { Lider: 0, Jumbo: 0, Unimarc: 0 };
+        const totalesAcumulados = { Lider: 0, Jumbo: 0, Unimarc: 0, SantaIsabel: 0, Tottus: 0, Mayorista: 0, FeriaLibre: 0 };
 
         nombresUnicosAComprar.forEach(nombreIng => {
             const coincidencias = ingredientesAComprar.filter(i => i.nombre.trim().toLowerCase() === nombreIng);
@@ -174,7 +174,7 @@ exports.generarMenuPersonalizado = async (req, res) => {
             const cantidadTotalTexto = cantidadesUnicas.length > 0 ? cantidadesUnicas.join(' + ') : 'Al gusto';
 
             const precioData = mapaPrecios[nombreIng];
-            let precioLider = 0, precioJumbo = 0, precioUnimarc = 0, precioRef = 0;
+            let precioLider = 0, precioJumbo = 0, precioUnimarc = 0, precioSantaIsabel = 0, precioTottus = 0, precioMayorista = 0, precioFeriaLibre = 0, precioRef = 0;
 
             if (precioData) {
                 precioRef = precioData.precioPromedio || 0;
@@ -183,6 +183,10 @@ exports.generarMenuPersonalizado = async (req, res) => {
                         if (p.supermercado === 'Lider') precioLider = p.precio;
                         if (p.supermercado === 'Jumbo') precioJumbo = p.precio;
                         if (p.supermercado === 'Unimarc') precioUnimarc = p.precio;
+                        if (p.supermercado === 'Santa Isabel') precioSantaIsabel = p.precio;
+                        if (p.supermercado === 'Tottus') precioTottus = p.precio;
+                        if (p.supermercado === 'Mayorista') precioMayorista = p.precio;
+                        if (p.supermercado === 'Feria Libre') precioFeriaLibre = p.precio;
                     });
                 }
             }
@@ -191,17 +195,41 @@ exports.generarMenuPersonalizado = async (req, res) => {
             if (precioLider === 0) precioLider = precioRef > 0 ? precioRef : 1200;
             if (precioJumbo === 0) precioJumbo = precioRef > 0 ? Math.round(precioRef * 1.15) : 1400;
             if (precioUnimarc === 0) precioUnimarc = precioRef > 0 ? Math.round(precioRef * 1.05) : 1300;
+            if (precioSantaIsabel === 0) precioSantaIsabel = precioRef > 0 ? Math.round(precioRef * 1.05) : 1300;
+            if (precioTottus === 0) precioTottus = precioRef > 0 ? Math.round(precioRef * 1.05) : 1300;
+            if (precioMayorista === 0) precioMayorista = precioRef > 0 ? Math.round(precioRef * 1.05) : 1300;
+            if (precioFeriaLibre === 0) precioFeriaLibre = precioRef > 0 ? Math.round(precioRef * 1.05) : 1300;
 
             totalesAcumulados.Lider += precioLider;
             totalesAcumulados.Jumbo += precioJumbo;
             totalesAcumulados.Unimarc += precioUnimarc;
+            totalesAcumulados.SantaIsabel += precioSantaIsabel;
+            totalesAcumulados.Tottus += precioTottus;
+            totalesAcumulados.Mayorista += precioMayorista;
+            totalesAcumulados.FeriaLibre += precioFeriaLibre;
 
-            gastoSemanalCalculado += precioFallback;
+let costoReal = precioFallback;
+
+if (precioData && coincidencias.length > 0) {
+
+    costoReal = coincidencias.reduce((total, ing) => {
+
+        return total + calcularCostoIngrediente(
+            precioData,
+            ing.cantidad
+        );
+
+    }, 0);
+
+}
+
+gastoSemanalCalculado += costoReal;
 
             listaDeComprasDetallada.push({
                 ingrediente: nombreIng,
                 cantidad: cantidadTotalTexto || 'Al gusto',
-                preciosPorCadena: { Lider: precioLider, Jumbo: precioJumbo, Unimarc: precioUnimarc }
+                preciosPorCadena: { Lider: precioLider, Jumbo: precioJumbo, Unimarc: precioUnimarc, SantaIsabel: precioSantaIsabel, Tottus: precioTottus, Mayorista: precioMayorista, FeriaLibre: precioFeriaLibre
+                 }
             });
         });
 
@@ -222,7 +250,11 @@ exports.generarMenuPersonalizado = async (req, res) => {
                 totalesAcumulados: {
                     Lider: Math.round(totalesAcumulados.Lider),
                     Jumbo: Math.round(totalesAcumulados.Jumbo),
-                    Unimarc: Math.round(totalesAcumulados.Unimarc)
+                    Unimarc: Math.round(totalesAcumulados.Unimarc),
+                    SantaIsabel: Math.round(totalesAcumulados.SantaIsabel), 
+                    Tottus: Math.round(totalesAcumulados.Tottus), 
+                    Mayorista: Math.round(totalesAcumulados.Mayorista), 
+                    FeriaLibre: Math.round(totalesAcumulados.FeriaLibre)
                 },
                 listaDeCompras: listaDeComprasDetallada
             }
@@ -245,11 +277,17 @@ exports.crearIngrediente = async (req, res) => {
                         $set: {
                             nombre: ingrediente.nombre.trim().toLowerCase(),
                             categoria: ingrediente.categoria || 'otros',
+                            contenidoUnidad: ingrediente.contenidoUnidad,
+                            unidadContenido: ingrediente.unidadContenido,
                             precioPromedio: ingrediente.precioPromedio,
                             preciosPorCadena: [
                                 { supermercado: "Lider", precio: ingrediente.preciosPorCadena.Lider },
                                 { supermercado: "Jumbo", precio: ingrediente.preciosPorCadena.Jumbo },
-                                { supermercado: "Unimarc", precio: ingrediente.preciosPorCadena.Unimarc }
+                                { supermercado: "Unimarc", precio: ingrediente.preciosPorCadena.Unimarc },
+                                { supermercado: "Santa Isabel", precio: ingrediente.preciosPorCadena.SantaIsabel }, 
+                                { supermercado: "Tottus", precio: ingrediente.preciosPorCadena.Tottus },
+                                { supermercado: "Mayorista", precio: ingrediente.preciosPorCadena.Mayorista },
+                                { supermercado: "Feria Libre", precio: ingrediente.preciosPorCadena.FeriaLibre }
                             ]
                         }
                     },
@@ -307,4 +345,55 @@ exports.actualizarOMasivoRecetas = async (req, res) => {
         console.error("🚨 Error al sobrescribir recetas:", error);
         res.status(500).json({ error: "Error en el servidor al actualizar las recetas.", detalle: error.message });
     }
+};
+
+function parsearCantidad(textoCantidad) {
+    if (!textoCantidad) return null;
+
+    const match = textoCantidad
+        .toLowerCase()
+        .trim()
+        .match(/([\d.,]+)\s*(g|gr|kg|ml|l|un|unidad|atado)/);
+
+    if (!match) return null;
+
+    return {
+        valor: parseFloat(match[1].replace(',', '.')),
+        unidad: match[2]
+    };
+};
+
+function calcularCostoIngrediente(ingredienteDB, cantidadReceta) {
+
+    const receta = parsearCantidad(cantidadReceta);
+
+    if (!receta) {
+        return ingredienteDB.precioPromedio;
+    }
+
+    const contenidoBase = ingredienteDB.contenidoUnidad;
+    const unidadBase = ingredienteDB.unidadContenido;
+
+    let factor = 1;
+
+    if (unidadBase === 'kg' && receta.unidad === 'g') {
+        factor = receta.valor / 1000;
+    }
+    else if (unidadBase === 'g' && receta.unidad === 'g') {
+        factor = receta.valor / contenidoBase;
+    }
+    else if (unidadBase === 'ml' && receta.unidad === 'ml') {
+        factor = receta.valor / contenidoBase;
+    }
+    else if (unidadBase === 'l' && receta.unidad === 'ml') {
+        factor = receta.valor / 1000;
+    }
+    else if (unidadBase === 'un' && receta.unidad === 'un') {
+        factor = receta.valor / contenidoBase;
+    }
+    else if (unidadBase === 'atado' && receta.unidad === 'atado') {
+        factor = receta.valor;
+    }
+
+    return ingredienteDB.precioPromedio * factor;
 };
