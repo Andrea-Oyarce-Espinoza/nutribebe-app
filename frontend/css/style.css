@@ -424,3 +424,17 @@ input[type="number"]:focus, select:focus {
     grid-template-columns: 1fr !important;
   }
 }
+
+.budget-alert {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+
+  padding: 15px;
+
+  border-radius: 10px;
+
+  margin-bottom: 20px;
+
+  font-weight: 600;
+}

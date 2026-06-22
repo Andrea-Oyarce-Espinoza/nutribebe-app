@@ -4,21 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NutriBebé - Menús Infantiles</title>
-  
-  <!-- Vinculación de Favicon apuntando a carpeta assets -->
   <link class="js-favicon" rel="icon" type="image/png" href="assets/logo.png">
-  
-  <!-- Vinculación del Manifiesto para App Móvil (PWA) -->
   <link rel="manifest" href="manifest.json">
-  
-  <!-- Estilos CSS -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <div class="container">
-    
-    <!-- ENCABEZADO PRINCIPAL CON LOGO -->
+
     <header class="main-header">
       <div class="logo-container">
         <img src="assets/logo.png" alt="NutriBebé Logo" class="main-logo">
@@ -26,16 +19,19 @@
       <p>Menos tiempo planificando, más tiempo en familia</p>
     </header>
 
-    <!-- DASHBOARD PRINCIPAL -->
     <main class="dashboard-moderno">
 
-      <!-- PASO 1: FORMULARIO DE ENTRADA -->
+      <!-- ================================================================
+           PASO 1: FORMULARIO DE DATOS DEL BEBÉ
+           (La despensa pasó al modal — el formulario queda limpio)
+           ================================================================ -->
       <section id="vista-paso1" class="seccion-paso fade-in">
         <div class="card-formulario">
           <h2>Datos del Bebé</h2>
-          <p class="subtitulo-seccion">Configura el perfil para calcular los requerimientos y optimizar tu presupuesto</p>
+          <p class="subtitulo-seccion">Completa el perfil para generar el menú personalizado</p>
 
           <form id="filter-form">
+
             <div class="form-group row-biometrica">
               <div>
                 <label for="age">Edad (en meses):</label>
@@ -102,73 +98,43 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Alimentos que ya tienes en casa (Se descontarán del total):</label>
-              <div class="checkbox-group" id="despensa-container">
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="pera"> Pera</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="manzana"> Manzana</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="platano"> Plátano</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="avena instantanea"> Avena Instantánea</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="leche entera"> Leche Entera</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="yogurt natural"> Yogurt Natural</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="huevo"> Huevo</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="atun al agua"> Atún al agua</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="filete de salmon"> Filete de Salmón</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="filete de merluza"> Filete de Merluza</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="posta molida"> Posta Molida</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="pechuga de pavo"> Pechuga de Pavo</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="pechuga de pollo"> Pechuga de Pollo</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="berenjena"> Berenjena</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="espinaca"> Espinaca</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="zapallo"> Zapallo</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="zanahoria"> Zanahoria</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="zapallo italiano"> Zapallo Italiano</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="porotos verdes"> Porotos Verdes</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="brocoli"> Brocolí</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="palta"> Palta</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="aceite de oliva"> Aceite de Oliva</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="garbanzos"> Garbanzos</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="lentejas rojas"> Lentejas Rojas</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="lentejas"> Lentejas</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="quinoa"> Quínoa</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="arroz integral"> Arroz Integral</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="cuscus"> Cuscús</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="fideo cabello"> Fideo Cabello</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="polenta"> Polenta</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="semola de trigo"> Sémola de Trigo</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="frutilla"> Frutilla</label>
-                <label class="checkbox-label"><input type="checkbox" name="despensa" value="canela molida"> Canela Molida</label>
-              </div>
-            </div>
-
             <div class="botones-acciones">
-              <button type="submit" class="btn-primary-moderno">Generar Menú Semanal</button>
+              <button type="submit" class="btn-primary-moderno">Continuar →</button>
               <button type="button" id="btn-clear" class="btn-secondary-moderno">Limpiar</button>
             </div>
+
           </form>
         </div>
       </section>
 
-      <!-- LOADER DE PANTALLA INTERMEDIO -->
+      <!-- LOADER -->
       <div id="loader-pantalla" class="loader-container hidden">
         <div class="spinner-moderno"></div>
         <p id="loader-texto">Procesando requerimientos nutricionales...</p>
       </div>
 
-      <!-- BARRA DE NAVEGACIÓN COMPACTA DE RESULTADOS -->
+      <!-- BARRA DE NAVEGACIÓN DE RESULTADOS -->
       <nav id="navegacion-resultados" class="nav-resultados hidden">
         <button id="btn-nav-menu" class="nav-btn active" type="button">
-          <span>📅</span> <span class="nav-text-desktop">Menú Recomendado</span><span class="nav-text-mobile">Menú</span>
+          <span>📅</span>
+          <span class="nav-text-desktop">Menú Recomendado</span>
+          <span class="nav-text-mobile">Menú</span>
         </button>
         <button id="btn-nav-compras" class="nav-btn" type="button">
-          <span>🛒</span> <span class="nav-text-desktop">Lista y Precios</span><span class="nav-text-mobile">Compras</span>
+          <span>🛒</span>
+          <span class="nav-text-desktop">Lista y Precios</span>
+          <span class="nav-text-mobile">Compras</span>
         </button>
         <button id="btn-nav-volver" class="nav-btn btn-volver-atras" type="button">
-          <span>🔄</span> <span class="nav-text-desktop">Cambiar Perfil</span><span class="nav-text-mobile">Datos</span>
+          <span>🔄</span>
+          <span class="nav-text-desktop">Cambiar Perfil</span>
+          <span class="nav-text-mobile">Datos</span>
         </button>
       </nav>
 
-      <!-- PASO 2: VISTA DE MENÚS Y RECETAS (AQUÍ IRÁ EL INFORME DINÁMICO) -->
+      <!-- ================================================================
+           PASO 2: MENÚS Y RECETAS
+           ================================================================ -->
       <section id="vista-paso2" class="seccion-paso hidden fade-in">
         <div class="card-resultado-moderna">
           <div class="tabs-container" id="menu-tabs">
@@ -177,18 +143,20 @@
             <button class="tab-btn" data-tab="colaciones">Colaciones</button>
             <button class="tab-btn" data-tab="postres">Postres</button>
           </div>
-
-          <!-- Contenedor Maestro unificado con estilos CSS -->
           <div id="recipes-container" class="recetas-grid-moderna"></div>
         </div>
       </section>
 
-      <!-- PASO 3: VISTA DE COMPRAS Y FINANZAS -->
+      <!-- ================================================================
+           PASO 3: COMPRAS Y FINANZAS
+           ================================================================ -->
       <section id="vista-paso3" class="seccion-paso hidden fade-in">
         <div class="card-resultado-moderna">
 
+          <div id="budget-warning" class="hidden"></div>
+
           <div id="finance-summary" class="resumen-financiero-box">
-            <div class="resumen-card-mini cost">Gasto Estimado Base Semanal: <span id="total-cost">$0</span></div>
+            <div class="resumen-card-mini cost">Gasto Estimado Semanal: <span id="total-cost">$0</span></div>
             <div class="resumen-card-mini saving">Tu Ahorro por Despensa: <span id="total-savings">$0</span></div>
           </div>
 
@@ -197,17 +165,16 @@
 
           <div class="tabla-compras-wrapper">
             <h3 class="titulo-tabla-seccion">Lista Unificada de Compras (Cantidades Consolidadas)</h3>
-            <p class="leyenda-despensa">Los ingredientes seleccionados de tu despensa ya fueron descontados automáticamente.</p>
-
+            <p class="leyenda-despensa">Los ingredientes de tu despensa ya fueron descontados del total.</p>
             <div class="tabla-scroll">
               <table class="tabla-moderna">
                 <thead>
                   <tr>
                     <th>Ingredientes</th>
-                    <th style="text-align: center;">Cantidad</th>
-                    <th style="text-align: right;">Lider</th>
-                    <th style="text-align: right;">Jumbo</th>
-                    <th style="text-align: right;">Unimarc</th>
+                    <th style="text-align:center;">Cantidad</th>
+                    <th style="text-align:right;">Lider</th>
+                    <th style="text-align:right;">Jumbo</th>
+                    <th style="text-align:right;">Unimarc</th>
                   </tr>
                 </thead>
                 <tbody id="cuerpo-tabla-compras"></tbody>
@@ -217,19 +184,77 @@
 
         </div>
       </section>
-      
+
     </main>
   </div>
-<div id="recipe-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
-  <div style="background-color: #ffffff; padding: 25px; border-radius: 16px; width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; font-family: system-ui, sans-serif;">
-    
-    <button id="close-modal" style="position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; font-size: 1.2rem; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
-    
-    <div id="modal-body-content">
+
+  <!-- ================================================================
+       MODAL DE DESPENSA (Paso intermedio antes de generar el menú)
+       ================================================================ -->
+  <div id="modal-despensa" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div style="background:#fff; padding:28px; border-radius:16px; width:92%; max-width:580px; max-height:88vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.15); position:relative;">
+
+      <button id="btn-cerrar-despensa" style="position:absolute;top:14px;right:14px;background:#f1f5f9;border:none;font-size:1.1rem;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#64748b;font-weight:bold;">✕</button>
+
+      <h3 style="color:#1e293b;margin:0 0 6px;">🏠 ¿Qué tienes en casa?</h3>
+      <p style="color:#64748b;font-size:.9rem;margin:0 0 20px;">Marca los ingredientes que ya tienes. Se descontarán del costo total.</p>
+
+      <div class="checkbox-group" style="max-height:50vh; overflow-y:auto; margin-bottom:20px;">
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="pera"> Pera</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="manzana"> Manzana</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="platano"> Plátano</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="avena instantanea"> Avena Instantánea</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="leche entera"> Leche Entera</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="yogurt natural"> Yogurt Natural</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="huevo"> Huevo</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="atun al agua"> Atún al agua</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="filete de salmon"> Filete de Salmón</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="filete de merluza"> Filete de Merluza</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="posta molida"> Posta Molida</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="pechuga de pavo"> Pechuga de Pavo</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="pechuga de pollo"> Pechuga de Pollo</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="berenjena"> Berenjena</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="espinaca"> Espinaca</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="zapallo"> Zapallo</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="zanahoria"> Zanahoria</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="zapallo italiano"> Zapallo Italiano</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="porotos verdes"> Porotos Verdes</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="brocoli"> Brocolí</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="palta"> Palta</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="aceite de oliva"> Aceite de Oliva</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="garbanzos"> Garbanzos</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="lentejas rojas"> Lentejas Rojas</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="lentejas"> Lentejas</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="quinoa"> Quínoa</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="arroz integral"> Arroz Integral</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="cuscus"> Cuscús</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="fideo cabello"> Fideo Cabello</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="polenta"> Polenta</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="semola de trigo"> Sémola de Trigo</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="frutilla"> Frutilla</label>
+        <label class="checkbox-label"><input type="checkbox" name="despensa" value="canela molida"> Canela Molida</label>
       </div>
+
+      <div style="display:flex;gap:12px;">
+        <button id="btn-confirmar-despensa" style="flex:2;background:#8BA87E;color:white;border:none;height:48px;border-radius:10px;font-weight:bold;font-size:1rem;cursor:pointer;">
+          Generar Menú 🚀
+        </button>
+        <button id="btn-saltar-despensa" style="flex:1;background:#EAE6DC;color:#5D5A51;border:none;height:48px;border-radius:10px;font-weight:600;cursor:pointer;">
+          No tengo nada
+        </button>
+      </div>
+
+    </div>
   </div>
-</div>
-  <!-- Script Principal -->
+
+  <!-- MODAL DE DETALLE DE RECETA -->
+  <div id="recipe-modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div style="background:#ffffff; padding:25px; border-radius:16px; width:90%; max-width:550px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); position:relative;">
+      <button id="close-modal" style="position:absolute;top:15px;right:15px;background:#f1f5f9;border:none;font-size:1.2rem;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#64748b;display:flex;align-items:center;justify-content:center;font-weight:bold;">✕</button>
+      <div id="modal-body-content"></div>
+    </div>
+  </div>
+
   <script src="js/app.js"></script>
 </body>
 </html>
