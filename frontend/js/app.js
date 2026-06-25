@@ -315,7 +315,7 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
 
     if (!datos.menuSemanal || Object.keys(datos.menuSemanal).length === 0) return;
 
-    const cats = ['principales', 'desayunos', 'colaciones', 'postres'];
+    const cats = ['principales', 'desayunos', 'colaciones'];
     const subGrillas = {};
 
     cats.forEach(cat => {
@@ -355,7 +355,7 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
         [
             { key: 'desayuno',      destino: 'desayunos',  titulo: '🥞 Desayuno' },
             { key: 'colacionTarde', destino: 'colaciones', titulo: '🍎 Colación' },
-            { key: 'postre',        destino: 'postres',    titulo: '🍓 Postre'   }
+            { key: 'postre',        destino: 'colaciones', titulo: '🍓 Postre'   }
         ].forEach(({ key, destino, titulo }) => {
             const item = menuDia[key];
             const card = document.createElement('div');
