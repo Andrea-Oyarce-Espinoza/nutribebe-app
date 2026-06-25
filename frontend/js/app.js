@@ -353,11 +353,12 @@ function dibujarMenuEnPantalla(datos, contenedorRecetas, txtGasto, txtAhorro) {
 
         // Sub-categorías
         [
-            { key: 'desayuno',      destino: 'desayunos',  titulo: '🥞 Desayuno' },
-            { key: 'colacionTarde', destino: 'colaciones', titulo: '🍎 Colación' },
-            { key: 'postre',        destino: 'colaciones', titulo: '🍓 Postre'   }
+            { key: 'desayuno', destino: 'desayunos', titulo: '🥞 Desayuno' },
+            { key: '_colacion_unificada', destino: 'colaciones', titulo: '🍎 Colación / Postre' }
         ].forEach(({ key, destino, titulo }) => {
-            const item = menuDia[key];
+            const item = key === '_colacion_unificada'
+                ? (menuDia.colacionTarde || menuDia.postre || null)
+                : menuDia[key];
             const card = document.createElement('div');
             card.className = 'receta-card';
             const ingHTML = item?.ingredientes?.length > 0
